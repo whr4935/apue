@@ -1,9 +1,6 @@
-#include <stdio.h>
-#include <gnu/libc-version.h>
-#include <unistd.h>
-#include <apue.h>
-
 #include "includes.h"
+#include <gnu/libc-version.h>
+
 
 #ifdef WHR
 #define  xx 1
@@ -13,10 +10,7 @@
 
 int main(int argc, char *argv[])
 {
-	char sz[] = "Hello, World!\n";	/* Hover mouse over "sz" while debugging to see its contents */
-	printf("%s", sz);	
-	fflush(stdout); /* <============== Put a breakpoint here */
-
+	int ret;
 	char version[100];
 
 	confstr(_CS_GNU_LIBC_VERSION, version, 100);
@@ -24,6 +18,11 @@ int main(int argc, char *argv[])
 
 	printf("Libc version: %s\n", gnu_get_libc_version());
 	printf("Libc release: %s\n", gnu_get_libc_release());
+
+	ret = pathconf("/", _PC_PATH_MAX);  //4096
+
+	ret = pathconf("/", _POSIX_NO_TRUNC);
+
 
 	read_dir();
 
