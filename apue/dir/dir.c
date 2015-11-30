@@ -57,7 +57,7 @@ int read_dir()
 		err_sys("fcntl");
 	
 	if (ret & O_SYNC) {
-		printf("log file O_SYNC is set!\n");
+		printf("log file O_SYNC is set!\n"); 
 	} else {
 		printf("log file O_SYNC is not set!\n");
 
