@@ -11,6 +11,9 @@
     <Filter Include="dir">
       <UniqueIdentifier>{a72a3146-834a-4568-b721-30615b5360d2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="misc">
+      <UniqueIdentifier>{1852c484-b354-4f6b-9a37-ff6471b79f4f}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -26,11 +29,20 @@
     <ClCompile Include="dir\dir.c">
       <Filter>dir</Filter>
     </ClCompile>
+    <ClCompile Include="misc\misc.c">
+      <Filter>misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
     <ClInclude Include="include\includes.h">
       <Filter>include</Filter>
+    </ClInclude>
+    <ClInclude Include="dir\file_dir.h">
+      <Filter>dir</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\misc.h">
+      <Filter>misc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

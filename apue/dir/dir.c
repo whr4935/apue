@@ -1,6 +1,9 @@
-#include "includes.h"
-#include <dirent.h>
-#include <fcntl.h>
+#include <includes.h>
+
+int TEST_file_dir()
+{
+	return 0;
+}
 
 int read_dir()
 {
