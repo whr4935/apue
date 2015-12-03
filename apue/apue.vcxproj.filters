@@ -26,11 +26,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.c" />
-    <ClCompile Include="misc\misc.c">
-      <Filter>misc</Filter>
-    </ClCompile>
     <ClCompile Include="dir\file_dir.c">
       <Filter>dir</Filter>
+    </ClCompile>
+    <ClCompile Include="misc\misc.c">
+      <Filter>misc</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

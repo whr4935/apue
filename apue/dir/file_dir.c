@@ -363,10 +363,36 @@ int test_time()
 {
 	struct timespec t_spec;
 	int ret;
+	time_t t, t2;
+	struct tm *t_tm;
+	char t_buf[30];
+	struct tm tm_buf;
+	char *pret;
 
 	ret = clock_gettime(CLOCK_REALTIME, &t_spec);
 	if (ret < 0)
 		err_sys("clock_gettime");
+
+	t = t_spec.tv_sec;
+	t_tm = localtime(&t);
+	ret = strftime(t_buf, 30, "%F %T", t_tm);
+	if (ret == 0) {
+		err_ret("strftime convert failed!\n");
+	} else {
+		printf("time: %s\n", t_buf);
+	}
+
+	pret = strptime(t_buf, "%Y-%m-%d %H:%M:%S", &tm_buf);
+	if (pret == NULL) {
+		err_msg("strptime failed!");
+	} else {
+		t2 = mktime(&tm_buf);
+		if (t2 != t) {
+			err_msg("mktime failed!");
+		} else {
+			printf("mktime success: %d\n", t2);
+		}
+	}
 
 	return 0;
 }

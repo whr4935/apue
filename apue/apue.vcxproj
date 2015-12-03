@@ -47,8 +47,9 @@
   <ItemDefinitionGroup>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="dir\dir.c" />
+    <ClCompile Include="dir\file_dir.c" />
     <ClCompile Include="main.c" />
+    <ClCompile Include="misc\misc.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="debug.mak" />
@@ -56,8 +57,10 @@
     <None Include="release.mak" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="dir\file_dir.h" />
     <ClInclude Include="include\includes.h" />
     <ClInclude Include="main.h" />
+    <ClInclude Include="misc\misc.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
