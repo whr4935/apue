@@ -23,7 +23,7 @@ error:
 	$(error Invalid configuration, please check your inputs)
 endif
 
-SOURCEFILES := dir/dir.c main.c
+SOURCEFILES := dir/dir.c main.c misc/misc.c
 EXTERNAL_LIBS := 
 EXTERNAL_LIBS_COPIED := $(foreach lib, $(EXTERNAL_LIBS),$(BINARYDIR)/$(notdir $(lib)))
 
@@ -132,5 +132,9 @@ $(BINARYDIR)/%.o : %.s $(all_make_files) |$(BINARYDIR)
 
 
 $(BINARYDIR)/dir.o : dir/dir.c $(all_make_files) |$(BINARYDIR)
+	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
+
+
+$(BINARYDIR)/misc.o : misc/misc.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 

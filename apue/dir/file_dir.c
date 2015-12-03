@@ -3,6 +3,9 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <sys/utsname.h>
+#include <bits/local_lim.h>
+#include <time.h>
 
 int TEST_file_dir()
 {
@@ -10,7 +13,9 @@ int TEST_file_dir()
 //	test_chmod();
 //	temporary_file();
 //	mem_file();
-	test_pwd();
+//	test_pwd();
+//	test_identification();
+	test_time();
 
 	return 0;
 }
@@ -332,6 +337,36 @@ int test_pwd()
 		err_sys("getpwuid");
 
 	pwd = getpwnam("root");
+
+	return 0;
+}
+
+int test_identification()
+{
+	struct utsname name;
+	char name_buf[HOST_NAME_MAX];
+	int ret;
+
+	ret = uname(&name);
+	if (ret < 0)
+		err_sys("uname");
+	
+	ret = gethostname(name_buf, HOST_NAME_MAX);
+	if (ret < 0)
+		err_sys("gethostname");
+
+
+	return 0;
+}
+
+int test_time()
+{
+	struct timespec t_spec;
+	int ret;
+
+	ret = clock_gettime(CLOCK_REALTIME, &t_spec);
+	if (ret < 0)
+		err_sys("clock_gettime");
 
 	return 0;
 }

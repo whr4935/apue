@@ -23,7 +23,7 @@ error:
 	$(error Invalid configuration, please check your inputs)
 endif
 
-SOURCEFILES := dir/dir.c main.c misc/misc.c
+SOURCEFILES := dir/file_dir.c main.c misc/misc.c
 EXTERNAL_LIBS := 
 EXTERNAL_LIBS_COPIED := $(foreach lib, $(EXTERNAL_LIBS),$(BINARYDIR)/$(notdir $(lib)))
 
@@ -131,7 +131,7 @@ $(BINARYDIR)/%.o : %.s $(all_make_files) |$(BINARYDIR)
 #VisualGDB: GeneratedRules				#<--- All lines below are auto-generated
 
 
-$(BINARYDIR)/dir.o : dir/dir.c $(all_make_files) |$(BINARYDIR)
+$(BINARYDIR)/file_dir.o : dir/file_dir.c $(all_make_files) |$(BINARYDIR)
 	$(CC) $(CFLAGS) -c $< -o $@ -MD -MF $(@:.o=.dep)
 
 

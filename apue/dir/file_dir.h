@@ -9,6 +9,8 @@ int test_chmod();
 int temporary_file();
 int mem_file();
 int test_pwd();
+int test_identification();
+int test_time();
 
 
 
