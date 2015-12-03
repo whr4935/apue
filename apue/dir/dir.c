@@ -1,7 +1,17 @@
 #include <includes.h>
+#include <dirent.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <pwd.h>
 
 int TEST_file_dir()
 {
+//	read_dir();
+//	test_chmod();
+//	temporary_file();
+//	mem_file();
+	test_pwd();
+
 	return 0;
 }
 
@@ -125,4 +135,203 @@ int read_dir()
 	}
 
 	closedir(dp);
+}
+
+int test_chmod()
+{
+#define		TEST_FILE_NAME	"../a.txt"
+	int ret;
+	int mask;
+	int fd;
+	struct stat statbuf;
+	mode_t fmode;
+
+	mask = umask(0);
+	printf("mask = %o\n", mask);
+
+	fd = creat(TEST_FILE_NAME, S_IRWXU|S_IRWXG|S_IRWXO);
+	if (fd < 0)
+		err_sys("create");
+
+	ret = fstat(fd, &statbuf);
+	if (ret < 0)
+	err_sys("fstat");
+
+	fmode = statbuf.st_mode;
+	printf("fmode = %o\n", fmode);
+
+	printf("uid = %d, gid = %d\n", statbuf.st_uid, statbuf.st_gid);
+
+	close(fd);
+
+	ret = access(TEST_FILE_NAME, F_OK);
+	if (ret < 0)
+		err_sys("access");
+
+	ret = access(TEST_FILE_NAME, R_OK|W_OK|X_OK);
+	if (ret < 0)
+		err_sys("access");
+
+	printf("access test ok!\n");
+
+	ret = chmod(TEST_FILE_NAME, fmode|S_ISUID|S_ISGID);
+	if (ret < 0)
+		err_sys("chmod");
+	printf("chmod ok!\n");
+
+	fmode &= ~(S_ISUID | S_ISGID);
+
+	ret = chmod(TEST_FILE_NAME, fmode & ~S_IXUSR | S_ISUID);
+	if (ret < 0)
+		err_sys("chmod");
+
+	ret = chmod(TEST_FILE_NAME, fmode | S_ISVTX);
+	if (ret < 0)
+		err_sys("chmod");
+
+	fd = open(TEST_FILE_NAME, O_RDWR);
+	if (fd < 0)
+		err_sys("open");
+
+	ret = lseek(fd, 1<<16, SEEK_SET);
+	if (ret == -1)
+		err_sys("lseek");
+
+	printf("current file offst: %d\n", ret);
+
+	ret = write(fd, &ret, sizeof(int));
+	if (ret < 0)
+		err_sys("write");
+	else if (ret != sizeof(int))
+		err_ret("write %d bytes!\n", ret);
+
+	close(fd);
+
+	ret = truncate(TEST_FILE_NAME, (1<<31)-1);
+	if (ret < 0)
+		err_sys("truncate");
+
+	return 0;
+}
+
+int temporary_file()
+{
+	char name[L_tmpnam], line[MAXLINE];
+	FILE *fp;
+	int fd;
+	int ret;
+
+	printf("%s\n", tmpnam(NULL));
+
+	tmpnam(name);
+
+	printf("name = %s\n", name);
+
+	fp = tmpfile();
+	if (fp == NULL)
+		err_sys("tmpfile");
+
+	fputs("one line test!\n", fp);
+	rewind(fp);
+
+	if (fgets(line, MAXLINE, fp) == NULL)
+		err_sys("fgets");
+	
+	fputs(line, stdout);
+	line[0] = '\0';
+	printf("end\n");
+
+	strcpy(name, "../whr_XXXXXX.txt");
+	fd = mkstemp(name);
+	if (fd < 0)
+		err_sys("mkstemp");
+
+	ret = dprintf(fd, "hello, mkstemp!\n");
+	close(fd);
+
+	fd = open(name, O_RDWR);
+	if (fd < 0)
+		err_sys("open");
+
+	ret = read(fd, line, MAXLINE);
+	if (ret <= 0)
+		err_quit("read return: %d\n", ret);
+
+	fputs(line, stdout);
+	puts("mkstemp end!");
+
+	if (access(name, F_OK) == 0) {
+		unlink(name);
+	}
+
+	ret = close(fd);
+
+	return 0;
+}
+
+int mem_file()
+{
+#define BSZ 48
+
+	FILE *fp;
+	char buf[BSZ];
+	int ret;
+
+	memset(buf, 'a', BSZ - 2);
+	buf[BSZ - 2] = '\0';
+	buf[BSZ - 1] = 'X';
+	if ((fp = fmemopen(buf, BSZ, "w+")) == NULL)
+		err_sys("fmemopen failed");
+
+	printf("initial buffer contents: %s\n", buf);
+	fprintf(fp, "hello, world");
+	printf("before flush: %s\n", buf);
+	fflush(fp);
+	printf("after fflush: %s\n", buf);
+	printf("len of string in buf = %ld\n", (long)strlen(buf));
+	memset(buf, 'b', BSZ - 2);
+	buf[BSZ - 2] = '\0';
+	buf[BSZ - 1] = 'X';
+	fprintf(fp, "hello, world");
+	fseek(fp, 0, SEEK_SET);
+	printf("after fseek: %s\n", buf);
+	printf("len of string in buf = %ld\n", (long)strlen(buf));
+	memset(buf, 'c', BSZ - 2);
+	buf[BSZ - 2] = '\0';
+	buf[BSZ - 1] = 'X';
+	fprintf(fp, "hello, world");
+	fflush(fp);
+	
+
+ 	ret = fseek(fp, 47, SEEK_SET);
+// 	ret = fprintf(fp, "MN");
+// 	ret = fflush(fp);
+
+//	ret = fseek(fp, -1, SEEK_END);
+	ret = fputc('K', fp);
+	ret = fflush(fp);
+	if (ret < 0) {
+		err_ret("fflush");
+	}
+	ret = ftell(fp);
+	
+	fclose(fp);
+	printf("after fclose: %s\n", buf);
+	printf("len of string in buf = %ld\n", (long)strlen(buf));
+
+
+	return 0;
+}
+
+int test_pwd()
+{
+	struct passwd* pwd;
+
+	pwd = getpwuid(0);
+	if (pwd == NULL)
+		err_sys("getpwuid");
+
+	pwd = getpwnam("root");
+
+	return 0;
 }

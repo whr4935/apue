@@ -1,5 +1,9 @@
-/Debug
-/apue/Debug
-/apue/obj
-/apue/VisualGDBCache
-/apue/apue.vcxproj.user
+Debug
+Release
+obj
+*.old
+*.opensdf
+*.sdf
+*.suo
+VisualGDBCache
+*.vcxproj.user

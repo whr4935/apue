@@ -2,8 +2,8 @@
 #define		_INCLUDE_H
 
 #include <apue.h>
-#include <dirent.h>
-#include <fcntl.h>
+#include <errno.h>
+
 
 #ifndef ARRAY_SIZE
 #define ARRAY_SIZE(a)		(sizeof(a)/sizeof(*a))
