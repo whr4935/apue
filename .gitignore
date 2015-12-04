@@ -7,3 +7,4 @@ obj
 *.suo
 VisualGDBCache
 *.vcxproj.user
+apue.vcxproj
