@@ -10,7 +10,8 @@ int TEST_process()
 	//test_rlimit();
 	//test_fork();
 	//test_vfork();
-	test_abort_core();
+	//test_abort_core();
+	test_segement_fault();
 
 	return 0;
 }
@@ -173,7 +174,7 @@ int test_vfork()
 	return 0;
 }
 
-int test_abort_core()
+static int gen_core()
 {
 	struct rlimit r_lim;
 	int ret;
@@ -183,8 +184,8 @@ int test_abort_core()
 		err_sys("getrlimit");
 	printf("core limit: %u, rlimit_max = %lu\n", r_lim.rlim_cur, r_lim.rlim_max);
 
-	r_lim.rlim_cur = r_lim.rlim_max;
-	
+	r_lim.rlim_cur = RLIM_INFINITY; //r_lim.rlim_max;
+
 	ret = setrlimit(RLIMIT_CORE, &r_lim);
 	if (ret < 0)
 		err_sys("setrlimit");
@@ -194,8 +195,30 @@ int test_abort_core()
 		err_sys("getrlimit");
 	printf("core limit: %u, rlimit_max = %u\n", r_lim.rlim_cur, r_lim.rlim_max);
 
-	printf("generate core...\n");
+//	printf("generate core...\n");
+
+	return 0;
+}
+
+int test_abort_core()
+{
+	gen_core();
+
 	abort();
 
 	return 0;
 }
+
+int test_segement_fault()
+{
+	int ret;
+	char *p = NULL;
+
+	gen_core();
+
+	*p = 88;
+
+
+	return 0;
+}
+

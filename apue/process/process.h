@@ -9,6 +9,7 @@ int test_rlimit();
 int test_fork();
 int test_vfork();
 int test_abort_core();
+int test_segement_fault();
 
 
 #endif
