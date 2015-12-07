@@ -4,11 +4,13 @@
 #include <includes.h>
 #include "dir/file_dir.h"
 #include "misc/misc.h"
+#include "process/process.h"
 
 
 //////////////////////////////////////////////////////////////////////////
-#define		TEST_FILE_DIR	1
+#define		TEST_FILE_DIR	0
 #define		TEST_MISC		0
+#define		TEST_PROCESS	1
 
 
 int (*test_func_array[])() = {
@@ -19,6 +21,12 @@ int (*test_func_array[])() = {
 #if TEST_MISC
 	TEST_misc,
 #endif
+
+#if TEST_PROCESS
+	TEST_process,
+#endif
+
+	NULL,
 };
 
 

@@ -14,6 +14,9 @@
     <Filter Include="misc">
       <UniqueIdentifier>{1852c484-b354-4f6b-9a37-ff6471b79f4f}</UniqueIdentifier>
     </Filter>
+    <Filter Include="process">
+      <UniqueIdentifier>{542bb3b9-3f94-41e0-b2c2-5455da99404c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <None Include="Makefile" />
@@ -32,6 +35,9 @@
     <ClCompile Include="misc\misc.c">
       <Filter>misc</Filter>
     </ClCompile>
+    <ClCompile Include="process\process.c">
+      <Filter>process</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -43,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="misc\misc.h">
       <Filter>misc</Filter>
+    </ClInclude>
+    <ClInclude Include="process\process.h">
+      <Filter>process</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
