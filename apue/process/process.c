@@ -11,7 +11,8 @@ int TEST_process()
 	//test_fork();
 	//test_vfork();
 	//test_abort_core();
-	test_segement_fault();
+	//test_segement_fault();
+	test_signal();
 
 	return 0;
 }
@@ -222,3 +223,31 @@ int test_segement_fault()
 	return 0;
 }
 
+static void sig_usr(int signo)
+{
+	if (signo == SIGUSR1) {
+		printf("catch SIGUSR1\n");
+	} else if (signo == SIGUSR2) {
+		printf("catch SIGUSR2\n");
+	} else {
+		printf("received signo = %d\n", signo);
+	}
+}
+
+int test_signal()
+{
+	int ret;
+
+	if (signal(SIGUSR1, sig_usr) == SIG_ERR) {
+		err_sys("signal");
+	}
+
+	if (signal(SIGUSR2, sig_usr) == SIG_ERR) {
+		err_sys("signal");
+	}
+
+	for (;;)
+		pause();
+
+	return 0;
+}
