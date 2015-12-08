@@ -2,6 +2,7 @@
 #include <includes.h>
 #include <setjmp.h>
 #include <sys/resource.h>
+#include <pwd.h>
 
 int TEST_process()
 {
@@ -12,7 +13,8 @@ int TEST_process()
 	//test_vfork();
 	//test_abort_core();
 	//test_segement_fault();
-	test_signal();
+	//test_signal();
+	test_signal_noreentrant();
 
 	return 0;
 }
@@ -250,4 +252,31 @@ int test_signal()
 		pause();
 
 	return 0;
+}
+
+static void my_alarm(int signo)
+{
+	struct passwd *pwptr;
+
+	printf("in signal handler\n");
+	pwptr = getpwnam("root");
+	if (pwptr == NULL)
+		err_sys("getpwnam");
+
+	alarm(1);
+}
+
+int test_signal_noreentrant()
+{
+	struct passwd *ptr;
+	
+	signal(SIGALRM, my_alarm);
+	alarm(1);
+
+	for (;;) {
+		if ((ptr = getpwnam("software")) == NULL)
+			err_sys("getpwnam");
+		if (strcmp(ptr->pw_name, "software") != 0)
+			printf("return value corrupted!, pwname = %s\n", ptr->pw_name);
+	}
 }

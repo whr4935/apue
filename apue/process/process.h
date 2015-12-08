@@ -11,6 +11,7 @@ int test_vfork();
 int test_abort_core();
 int test_segement_fault();
 int test_signal();
+int test_signal_noreentrant();
 
 
 #endif
