@@ -14,7 +14,8 @@ int TEST_process()
 	//test_abort_core();
 	//test_segement_fault();
 	//test_signal();
-	test_signal_noreentrant();
+	//test_signal_noreentrant();
+	test_sleep2();
 
 	return 0;
 }
@@ -279,4 +280,70 @@ int test_signal_noreentrant()
 		if (strcmp(ptr->pw_name, "software") != 0)
 			printf("return value corrupted!, pwname = %s\n", ptr->pw_name);
 	}
+}
+
+static sleep1_sig_alrm(int signo)
+{
+
+}
+
+static unsigned int sleep1(unsigned int seconds)
+{
+	if (signal(SIGALRM,	sleep1_sig_alrm) ==	SIG_ERR) {
+		return seconds;
+	}
+
+	alarm(seconds);
+	pause();
+	return alarm(0);
+}
+
+int test_sleep1()
+{
+	int ret;
+	time_t beg, end;
+
+	beg = time(NULL);
+	ret = sleep1(8);
+	end = time(NULL);
+
+	printf("duration %d\n", end - beg);
+
+	return 0;
+}
+
+static jmp_buf env_alrm;
+static sleep2_sig_alr(int signo)
+{
+	longjmp(env_alrm, 1);
+}
+
+unsigned int sleep2(unsigned int seconds)
+{
+	if (seconds == 0)
+		return 0;
+
+	if (signal(SIGALRM, sleep1_sig_alrm) == SIG_ERR)
+		return seconds;
+
+	if (setjmp(env_alrm) == 0) {
+		alarm(seconds);
+		pause();
+	}
+
+	return alarm(0);
+}
+
+int test_sleep2()
+{
+	int ret;
+	time_t beg, end;
+
+	beg = time(NULL);
+	ret = sleep2(1);
+	end = time(NULL);
+
+	printf("sleep2 duration %d\n", end - beg);
+
+	return 0;
 }

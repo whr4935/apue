@@ -12,6 +12,8 @@ int test_abort_core();
 int test_segement_fault();
 int test_signal();
 int test_signal_noreentrant();
+int test_sleep1();
+int test_sleep2();
 
 
 #endif
