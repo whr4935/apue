@@ -38,6 +38,9 @@
     <ClCompile Include="process\process.c">
       <Filter>process</Filter>
     </ClCompile>
+    <ClCompile Include="process\thread.c">
+      <Filter>process</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -51,6 +54,9 @@
       <Filter>misc</Filter>
     </ClInclude>
     <ClInclude Include="process\process.h">
+      <Filter>process</Filter>
+    </ClInclude>
+    <ClInclude Include="process\thread.h">
       <Filter>process</Filter>
     </ClInclude>
   </ItemGroup>
