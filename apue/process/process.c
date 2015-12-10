@@ -15,7 +15,9 @@ int TEST_process()
 	//test_segement_fault();
 	//test_signal();
 	//test_signal_noreentrant();
-	test_sleep2();
+	//test_sleep1();
+	//test_alarm();
+	test_sigprocmask();
 
 	return 0;
 }
@@ -282,10 +284,22 @@ int test_signal_noreentrant()
 	}
 }
 
-static sleep1_sig_alrm(int signo)
+static void sleep1_sig_alrm(int signo)
 {
 
 }
+
+static void sleep1_sig_interrupt(int signo)
+{
+	sigset_t s_set;
+	sigprocmask(0, NULL, &s_set);
+
+	if (sigismember(&s_set, signo))
+		printf("in sig handler, current signal is blocked!\n");
+
+	printf("catch SIGINT!\n");
+}
+#define	sig_interrupt_handler sleep1_sig_interrupt
 
 static unsigned int sleep1(unsigned int seconds)
 {
@@ -303,8 +317,11 @@ int test_sleep1()
 	int ret;
 	time_t beg, end;
 
+	signal(SIGINT, sleep1_sig_interrupt);
+
 	beg = time(NULL);
 	ret = sleep1(8);
+	printf("sleep left time is %d\n", ret);
 	end = time(NULL);
 
 	printf("duration %d\n", end - beg);
@@ -347,3 +364,93 @@ int test_sleep2()
 
 	return 0;
 }
+
+static void alarm_handler(int signo)
+{
+
+}
+
+static int check_signal_ret(int signo, sighandler_t sig_ret)
+{
+	if (sig_ret == SIG_IGN)
+		printf("old %s handler is SIG_IGN!\n", strsignal(signo));
+	else if (sig_ret == SIG_DFL)
+		printf("old %s handler is SIG_DFL!\n", strsignal(signo));
+	else
+		printf("old %s handler is user defined handler!\n", strsignal(signo));
+
+	return 0;
+}
+
+int test_alarm()
+{
+	int ret;
+	sighandler_t sig_ret;
+
+	if ((sig_ret = signal(SIGALRM, alarm_handler)) == SIG_ERR)
+		err_sys("signal");
+
+	check_signal_ret(SIGALRM, sig_ret);
+
+	errno = 0;
+	ret = alarm(2);
+	printf("ret = %d\n", ret);
+
+	ret = alarm(0);
+	printf("ret = %d\n", ret);
+	sig_ret = signal(SIGALRM, SIG_DFL);
+	check_signal_ret(SIGALRM, sig_ret);
+
+	return 0;
+}
+
+static void sig_quit_handler(int signo)
+{
+	printf("catch SIGQUIT\n");
+
+	sigset_t s_set;
+	sigprocmask(0, NULL, &s_set);
+
+	if (sigismember(&s_set, signo))
+		printf("in sig handler, current signal is blocked!\n");
+
+// 	if (signal(SIGQUIT, SIG_DFL) < 0)
+// 		err_sys("can't resotre SIGQUIT handler");
+}
+
+int test_sigprocmask()
+{
+	sigset_t s_set, s_oldset;
+	int ret;
+
+	signal(SIGINT, sig_interrupt_handler);
+	signal(SIGQUIT, sig_quit_handler);
+
+	gen_core();
+
+	sigemptyset(&s_set);
+	sigaddset(&s_set, SIGQUIT);
+
+	ret = sigprocmask(SIG_BLOCK, &s_set, &s_oldset);
+	if (ret < 0)
+		err_sys("sigprocmask");
+
+	sleep(5);
+
+	if (sigpending(&s_set) < 0)
+		err_sys("sigpending error");
+	if (sigismember(&s_set, SIGQUIT))
+		printf("\n SIGQUIT is pending\n");
+
+	ret = sigprocmask(SIG_SETMASK, &s_oldset, NULL);
+	if (ret < 0)
+		err_sys("sigprocmask");	
+	printf("SIGQUIT unblocked!\n");
+
+	sleep(5);
+	for (;;)
+		pause();
+
+	return 0;
+}
+

@@ -14,6 +14,7 @@ int test_signal();
 int test_signal_noreentrant();
 int test_sleep1();
 int test_sleep2();
-
+int test_alarm();
+int test_sigprocmask();
 
 #endif
