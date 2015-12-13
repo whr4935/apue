@@ -9,15 +9,54 @@
 
 int TEST_file_dir()
 {
+	test_pread();
 //	read_dir();
 //	test_chmod();
 //	temporary_file();
 //	mem_file();
 //	test_pwd();
 //	test_identification();
-	test_time();
+//	test_time();
 
 	return 0;
+}
+
+int test_pread()
+{
+	int fd;
+	int pos;
+	int ret;
+	char buf[100];
+	int i;
+	char *filename = tmpnam(NULL);
+
+	fd = open(filename, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+	if (fd < 0)
+		err_sys("open");
+
+	for (i = 0; i < ARRAY_SIZE(buf); ++i) {
+		buf[i] = i;
+	}
+
+	ret = write(fd, buf, ARRAY_SIZE(buf));
+	if (ret < 0) {
+		if (errno == EINTR) {
+			ret = 0;
+		} else {
+			err_sys("write");
+		}
+	}
+
+	pos = lseek(fd, 10, SEEK_SET);
+	printf("before pread, pos = %d\n", pos);
+
+	memset(buf, 0, ARRAY_SIZE(buf));
+	pread(fd, buf, 10, 10);
+
+	pos = lseek(fd, 0, SEEK_CUR);
+	printf("after pread, pos = %d\n", pos);
+
+	close(fd);
 }
 
 int read_dir()

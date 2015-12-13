@@ -1,12 +1,13 @@
 #include "process.h"
 #include <includes.h>
 #include <pthread.h>
+#include <limits.h>
 
 int TEST_thread()
 {
-//	test_pthread_create();
+	test_pthread_create();
 //	test_pthread_mutex();
-	test_double_lock_coarse();
+//	test_double_lock_coarse();
 
 	return 0;
 }
@@ -26,17 +27,19 @@ static void* thr_func(void *arg)
 	pthread_cleanup_push(clean_up, "second cleaup function");
 	
 //	pthread_exit((void*)&v);
-	sleep(10);
+	sleep(1);
 
 	pthread_cleanup_pop(0);
 	pthread_cleanup_pop(0);
 	
-	err_msg("exit...");
-//	exit(1);
+	//	exit(1);
 
+	err_msg("thread begin enter loop...");
 	for (;;) {
 		sleep(1);
 	}
+	err_msg("exit...");
+	
 
 	return (void*)&v;
 }
@@ -46,15 +49,30 @@ int test_pthread_create()
 	int ret;
 	pthread_t thr_id;
 	void* v;
+	pthread_attr_t attr;
+	int guardSize;
 
-	ret = pthread_create(&thr_id, NULL, thr_func, NULL);
+	pthread_attr_init(&attr);
+	pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
+	ret = pthread_attr_getguardsize(&attr, &guardSize);
+	ret = pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN*2);
+	ret = pthread_attr_getguardsize(&attr, &guardSize);
+
+	ret = pthread_create(&thr_id, &attr, thr_func, NULL);
 	if (ret != 0) {
 		err_msg("pthread_create: %s\n", strerror(ret));
 		exit(1);
 	}
+	ret = pthread_attr_destroy(&attr);
+	if (ret != 0) {
+		err_msg("pthread attr destroy failed: %s\n", strerror(ret));
+		exit(1);
+	}
+
 	sleep(2);
 
 	pthread_cancel(thr_id);
+//	sleep(5);
 
 //	ret = pthread_detach(thr_id);
 	ret = pthread_join(thr_id, (void**)&v);
@@ -62,7 +80,8 @@ int test_pthread_create()
 		err_msg("ptrhread_join: %s\n", strerror(ret));
 		exit(1);
 	}
-//	printf("v = %d\n", *(int*)v);
+	if (v != PTHREAD_CANCELED)
+		printf("v = %d\n", *(int*)v);
 //	sleep(3);
 
 	return 0;
