@@ -9,9 +9,9 @@
 
 
 //////////////////////////////////////////////////////////////////////////
-#define		TEST_FILE_DIR	1
+#define		TEST_FILE_DIR	0
 #define		TEST_MISC		0
-#define		TEST_PROCESS	0
+#define		TEST_PROCESS	1
 #define		TEST_THREAD		0
 
 

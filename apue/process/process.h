@@ -16,5 +16,7 @@ int test_sleep1();
 int test_sleep2();
 int test_alarm();
 int test_sigprocmask();
+int test_process_group();
+int test_daemon();
 
 #endif

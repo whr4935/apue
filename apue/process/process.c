@@ -3,6 +3,7 @@
 #include <setjmp.h>
 #include <sys/resource.h>
 #include <pwd.h>
+#include <syslog.h>
 
 int TEST_process()
 {
@@ -17,7 +18,9 @@ int TEST_process()
 	//test_signal_noreentrant();
 	//test_sleep1();
 	//test_alarm();
-	test_sigprocmask();
+	//test_sigprocmask();
+	//test_process_group();
+	test_daemon();
 
 	return 0;
 }
@@ -454,3 +457,145 @@ int test_sigprocmask()
 	return 0;
 }
 
+int test_process_group()
+{
+	pid_t pgp;
+	pid_t pgp_2;
+	pid_t pgp_3;
+	pid_t pid;
+	pid_t child_pid;
+	pid_t sid;
+	int ret;
+
+	pgp = getpgrp();
+	pgp_2 = getpgid(getpid());
+	pgp_3 = getpgid(0);
+	pid = getpid();
+
+	child_pid = fork();
+	if (child_pid < 0)
+		err_sys("fork");
+	else if (child_pid == 0) {
+		pgp = getpgrp();
+		printf("child process group id = %d, pid = %d\n", pgp, getpid());
+
+		setpgid(0, 0);
+
+		printf("after setpgid, child process group id = %d, pid = %d\n", getpgid(0), getpid());
+
+		exit(0);
+	} else if (child_pid > 0) {
+		printf("parent process group id = %d\n", getpgrp());
+		printf("parent session ID is %d\n", getsid(0));
+
+		sid = getsid(0);
+		
+		int fd;
+		char buf[100];
+		int len;
+		char *ptr = buf;
+		int chunk;
+
+		sprintf(buf, "/proc/%d/cmdline", sid);
+		fd = open(buf, O_RDONLY);
+		if (fd < 0)
+			err_sys("open");
+
+		ptr = buf;
+		len = 50;
+		memset(buf, 0, len);
+
+		while (len > 0) {
+			ret = read(fd, ptr, 1);
+			if (ret < 0) {
+				if (errno == EINTR)
+					ret = 0;
+				else {
+					err_msg("read");
+					break;
+				}
+			} else if (ret == 0) {
+				printf("read end of file!\n");
+				break;
+			}
+
+			ptr += ret;
+			len -= ret;
+		}
+		close(fd);
+
+		printf("session id cmdline: %s\n", buf);
+	}
+
+	return 0;
+}
+
+int test_daemon()
+{
+	int i, fd0, fd1, fd2;
+	pid_t pid;
+	struct rlimit rl;
+	struct sigaction sa;
+	int cnt = 0;
+
+	umask(0);
+
+	if (getrlimit(RLIMIT_NOFILE, &rl) < 0)
+		err_quit("can't get file descriptor limit");
+
+	if ((pid = fork()) < 0)
+		err_sys("fork");
+	else if (pid != 0)
+		exit(0);
+
+	setsid();
+
+	sa.sa_handler = SIG_IGN;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_flags = 0;
+	if (sigaction(SIGHUP, &sa, NULL) < 0)
+		err_sys("can't ignore SIGHUP");
+
+	if ((pid = fork()) < 0)
+		err_sys("fork");
+	else if (pid != 0)
+		exit(0);
+
+// 	if (chdir("/") < 0)
+// 		err_sys("chdir");
+
+	if (rl.rlim_max == RLIM_INFINITY)
+		rl.rlim_max = 1024;
+
+	for (i = 0; i < rl.rlim_max; ++i)
+		close(i);
+
+	openlog("apue", LOG_CONS, LOG_USER);
+	fd0 = open("/dev/null", O_RDWR);
+	fd1 = dup(fd0);
+	fd2 = dup(fd0);
+	if (fd0 != 0 || fd1 != 1 || fd2 != 2) {
+		syslog(LOG_ERR, "invalid file descriptor!\n");
+		exit(1);
+	}
+
+	syslog(LOG_INFO, "apue loop start...");
+	for (;;) {
+		sleep(1);
+
+		++cnt;
+		syslog(LOG_INFO, "apue count %d", cnt);
+		if (cnt >= 20) {
+			syslog(LOG_INFO, "cnt = %d, apue daemon ready exit...", cnt);
+			break;
+		}
+	}
+
+	closelog();
+	return 0;
+}
+
+test_single_instance_daemon()
+{
+	//lockfile();
+}
