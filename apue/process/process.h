@@ -18,5 +18,6 @@ int test_alarm();
 int test_sigprocmask();
 int test_process_group();
 int test_daemon();
+int test_unblock_write();
 
 #endif

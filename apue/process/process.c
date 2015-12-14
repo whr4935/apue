@@ -20,7 +20,8 @@ int TEST_process()
 	//test_alarm();
 	//test_sigprocmask();
 	//test_process_group();
-	test_daemon();
+	//test_daemon();
+	test_unblock_write();
 
 	return 0;
 }
@@ -595,7 +596,70 @@ int test_daemon()
 	return 0;
 }
 
-test_single_instance_daemon()
+int test_single_instance_daemon()
 {
 	//lockfile();
+}
+
+int test_unblock_write()
+{
+	static char buf[500000];
+	int val;
+	int ret;
+	int ntowrite, nwrite;
+	char *ptr;
+
+	ntowrite = read(STDIN_FILENO, buf, ARRAY_SIZE(buf));
+	fprintf(stderr, "read %d bytes\n", ntowrite);
+
+	val = fcntl(STDOUT_FILENO, F_GETFL, 0);
+	if (val < 0)
+		err_sys("fcntl");
+
+	fprintf(stderr, "val = %#x\n", val);
+
+	switch (val & O_ACCMODE) {
+	case O_RDONLY:
+		fprintf(stderr, "read only ");
+		break;
+
+	case O_WRONLY:
+		fprintf(stderr, "write only ");
+		break;
+
+	case O_RDWR:
+		fprintf(stderr, "read write ");
+		break;
+	}
+
+	if (val & O_APPEND)
+		fprintf(stderr, ", append");
+
+	if (val & O_NONBLOCK)
+		fprintf(stderr, ", noblocking");
+
+	if (val & O_SYNC)
+		fprintf(stderr, ", synchronous writes");
+
+	fputc('\n', stderr);
+//	fputs("\n", stderr);
+
+	val |= O_NONBLOCK;
+
+	ret = fcntl(STDOUT_FILENO, F_SETFL, val);
+	if (ret < 0)
+		err_sys("fcntl");
+
+	ptr = buf;
+	while (ntowrite > 0) {
+		nwrite = write(STDOUT_FILENO, ptr, ntowrite);
+		fprintf(stderr, "nwrite = %d, errno = %d\n", nwrite, errno);
+
+		if (nwrite > 0) {
+			ptr += nwrite;
+			ntowrite -= nwrite;
+		}
+	}
+	
+	return 0;
 }
