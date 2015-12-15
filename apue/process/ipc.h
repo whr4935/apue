@@ -3,6 +3,6 @@
 
 int TEST_ipc();
 
-
+int test_pipe();
 
 #endif // !_TEST_IPC_H

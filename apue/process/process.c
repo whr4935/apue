@@ -1,11 +1,5 @@
 #include "process.h"
 #include <includes.h>
-#include <setjmp.h>
-#include <sys/resource.h>
-#include <pwd.h>
-#include <syslog.h>
-#include <aio.h>
-#include <sys/mman.h>
 
 int TEST_process()
 {

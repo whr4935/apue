@@ -6,7 +6,14 @@
 #include <signal.h>
 #include <time.h>
 #include <fcntl.h>
+#include <setjmp.h>
+#include <pwd.h>
+#include <aio.h>
+#include <syslog.h>
 
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <sys/resource.h>
 
 //////////////////////////////////////////////////////////////////////////
 /*
@@ -28,44 +35,44 @@ err_msg: ²»´òÓ¡errno£¬·µ»Ø
 
 //////////////////////////////////////////////////////////////////////////
 #ifdef DEBUG
-#define LOG_INFO(format,...)  \
+#define log_info(format,...)  \
 	do{ \
 	fprintf(stderr,TERMINAL_COLOR_GREEN"[INFO:%s -> %s: %d] " format TERMINAL_COLOR_TERRESET, __FILE__, \
 	__func__, __LINE__, ##__VA_ARGS__ ); \
 			}while(0);
 
-#define LOG_DBG(format,...)  \
+#define log_dbg(format,...)  \
 	do{ \
 	fprintf(stderr, TERMINAL_COLOR_CYAN"[DEBUG:%s -> %s : %d] " format TERMINAL_COLOR_TERRESET, __FILE__, \
 	__func__, __LINE__, ##__VA_ARGS__ ); \
 			}while(0);
 
-#define LOG_WAR(var,...)	\
+#define log_war(var,...)	\
 	do{	\
 	fprintf(stderr, TERMINAL_COLOR_BOLDMAGENTA"[WARING:%s -> %s: %d] " var TERMINAL_COLOR_TERRESET, __FILE__, \
 	__func__,__LINE__, ##__VA_ARGS__);	\
 			}while(0);
 
-#define LOG_ERR(var,...) 	\
+#define log_err(var,...) 	\
 	do{	\
 	fprintf(stderr, TERMINAL_COLOR_BOLDRED"[ERROR:%s -> %s: %d] " var TERMINAL_COLOR_TERRESET, __FILE__, \
 	__func__,__LINE__, ##__VA_ARGS__); \
 			}while(0);
 
 #else
-#define LOG_INFO(format,...)  \
+#define log_info(format,...)  \
 	do{ \
 	fprintf(stderr,TERMINAL_COLOR_GREEN format TERMINAL_COLOR_TERRESET, ##__VA_ARGS__ ); \
 			}while(0);
 
-#define LOG_DBG(format,...)  
+#define log_dbg(format,...)  
 
-#define LOG_WAR(var,...)	\
+#define log_war(var,...)	\
 	do{	\
 	fprintf(stderr,TERMINAL_COLOR_BOLDMAGENTA var TERMINAL_COLOR_TERRESET, ##__VA_ARGS__);	\
 			}while(0);
 
-#define LOG_ERR(var,...) 	\
+#define log_err(var,...) 	\
 	do{	\
 	fprintf(stderr,TERMINAL_COLOR_BOLDRED var TERMINAL_COLOR_TERRESET, ##__VA_ARGS__); \
 			}while(0);
