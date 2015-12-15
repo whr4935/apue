@@ -6,13 +6,15 @@
 #include "misc/misc.h"
 #include "process/process.h"
 #include "process/thread.h"
+#include "process/ipc.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 #define		TEST_FILE_DIR	0
 #define		TEST_MISC		0
-#define		TEST_PROCESS	1
+#define		TEST_PROCESS	0
 #define		TEST_THREAD		0
+#define		TEST_IPC		1
 
 
 int (*test_func_array[])() = {
@@ -30,6 +32,10 @@ int (*test_func_array[])() = {
 
 #if TEST_THREAD
 	TEST_thread,
+#endif
+
+#if	TEST_IPC
+	TEST_ipc,
 #endif
 
 	NULL,
