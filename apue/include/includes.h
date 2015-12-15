@@ -10,9 +10,10 @@
 
 //////////////////////////////////////////////////////////////////////////
 /*
-err_sys: API调用失败，打印errno
-err_ret: 错误并打印errno
-err_msg: 错误不打印errno
+err_sys: 打印errno，退出
+err_ret: 打印errno，返回
+err_quit:不打印errno，退出
+err_msg: 不打印errno，返回
 */
 
 #ifndef ARRAY_SIZE

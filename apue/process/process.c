@@ -4,6 +4,8 @@
 #include <sys/resource.h>
 #include <pwd.h>
 #include <syslog.h>
+#include <aio.h>
+#include <sys/mman.h>
 
 int TEST_process()
 {
@@ -21,7 +23,11 @@ int TEST_process()
 	//test_sigprocmask();
 	//test_process_group();
 	//test_daemon();
-	test_unblock_write();
+	//test_unblock_write();
+	//test_record_lock();
+	//test_selct();
+	//test_aio();
+	test_memmap();
 
 	return 0;
 }
@@ -661,5 +667,257 @@ int test_unblock_write()
 		}
 	}
 	
+	return 0;
+}
+
+static int my_lock_reg(int fd, int cmd, int type, off_t offset, int whence, off_t len)
+{
+	struct flock lock;
+
+	lock.l_type = type;
+	lock.l_whence = whence;
+	lock.l_start = offset;
+	lock.l_len = len;
+
+	return fcntl(fd, cmd, &lock);
+}
+
+static pid_t my_lock_test(int fd, int cmd, int type, off_t offset, int whence, int len)
+{
+	struct flock lock;
+
+	lock.l_type = type;
+	lock.l_whence = whence;
+	lock.l_start = offset;
+	lock.l_len = len;
+
+	if (fcntl(fd, cmd, &lock) < 0)
+		err_sys("fcntl");
+
+	if (lock.l_type == F_UNLCK)
+		return 0;
+
+	return lock.l_pid;
+}
+
+static void lockbyte(const char *name, int fd, off_t offset)
+{
+	if (my_lock_reg(fd, F_SETLK, F_WRLCK, offset, SEEK_SET, 1) < 0)
+		err_sys("%s write lock error", name);
+
+	printf("%s: got the lock, type %lld\n", name, (long long)offset);
+}
+
+int test_record_lock()
+{
+	int ret;
+	int fd;
+	pid_t pid;
+	char *name;
+
+	name = tmpnam(NULL);
+	if((fd = creat(name, FILE_MODE)) < 0) {
+		err_sys("create");
+	}
+
+	if (write(fd, "ab", 2) != 2)
+		err_sys("write");
+
+	TELL_WAIT();
+	if ((pid = fork()) < 0)
+		err_sys("fork");
+	else if (pid == 0) {
+		lockbyte("child", fd, 0);
+		TELL_PARENT(getpid());
+		WAIT_PARENT();
+		lockbyte("child", fd, 1);
+		sleep(2);
+		exit(0);
+	} else {
+		lockbyte("parent", fd, 1);
+		TELL_CHILD(getpid());
+		WAIT_CHILD();
+		lockbyte("parent", fd, 0);
+
+		close(fd);
+		sleep(1);
+		unlink(name);
+	}
+
+	return 0;
+}
+
+static void sig_int_handler(int sig)
+{
+//	printf("interrupted by %s\n", strsignal(sig));
+	
+	exit(1);
+}
+
+int test_selct()
+{
+	fd_set r_set;
+	int max_fd = -1;
+	struct timeval t;
+	int ret;
+	char buf[100];
+	struct sigaction act;
+	FILE *fp;
+
+	act.sa_handler = sig_int_handler;
+	act.sa_flags = 0;
+	sigemptyset(&act.sa_mask);
+	ret = sigaction(SIGINT, &act, NULL);
+	if (ret < 0)
+		err_sys("sigaction");
+
+	ret = fcntl(STDIN_FILENO, F_GETFL, 0);
+	ret |= O_NONBLOCK;
+//	ret = fcntl(STDIN_FILENO, F_SETFL, ret);
+	if (ret < 0) {
+		err_msg("fcntl STDIN_FILENO to NOBLOCK failed!\n");
+		exit(1);
+	}
+
+	fp = freopen("stdout.txt", "w+", stdout);
+	if (fp == NULL)
+		err_sys("freopen");
+
+	for (;;) {
+		memset(buf, -1, 100);
+		gets(buf);
+	//	printf("gets: %s\n", buf);
+		puts(buf);
+
+		memset(buf, -1, 100);
+		fgets(buf, 100, stdin);
+//		printf("fgets: %s\n", buf);
+		fputs(buf, stdout);
+
+		exit(1);
+	}
+
+	for (;;) {
+		memset(buf, 0, 100);
+		FD_ZERO(&r_set);
+		FD_SET(STDIN_FILENO, &r_set);
+		if (max_fd < STDIN_FILENO)
+			max_fd = STDIN_FILENO;
+
+		t.tv_sec = 2;
+		t.tv_usec = 0;
+
+		max_fd += 1;
+		ret = select(max_fd, &r_set, NULL, NULL, NULL);
+		if (ret < 0)
+			err_sys("select");
+		else if (ret == 0) {
+		//	printf("select timeout!\n");
+		} else {
+			if (FD_ISSET(STDIN_FILENO, &r_set)) {
+				ret = read(STDIN_FILENO, buf, 100);
+				if (ret > 0) {
+					printf("%s\n", buf);
+				} else if (ret == 0) {
+					printf("read EOF!\n");
+				} else {
+					err_ret("read");
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
+int test_aio()
+{
+	int ret;
+	struct aiocb cb, *pcb = &cb;
+	char buf[100] = "";
+
+	cb.aio_fildes = STDIN_FILENO;
+	cb.aio_offset = 0;
+	cb.aio_buf = buf;
+	cb.aio_nbytes = 10;
+	cb.aio_reqprio = 0;
+	cb.aio_sigevent.sigev_notify = SIGEV_NONE;
+
+	ret = aio_read(&cb);
+	if (ret < 0)
+		err_sys("aio_read");
+
+	for (;;) {
+		ret = aio_suspend(&pcb, 1, NULL);
+		if (ret != 0) {
+			if (ret == -1) {
+				if (errno != EINTR)
+					err_sys("aio_error");
+				else
+					continue;
+			}
+		}
+
+		ret = aio_return(&cb);
+		printf("read %d bytes, buf: %s\n", ret, buf);
+		break;
+	}
+
+	return 0;
+}
+
+int test_memmap()
+{
+	int ret;
+	void *src, *dst;
+	int len;
+	int fd_in;
+	int page_size;
+	struct stat statbuf;
+	int file_size;
+
+	page_size = sysconf(_SC_PAGE_SIZE);
+	printf("page size = %d\n", page_size);
+
+	fd_in = open("mmap_in.txt", O_RDWR|O_CREAT|O_TRUNC, FILE_MODE);
+	if (fd_in < 0)
+		err_sys("open");
+
+	ret = write(fd_in, "abcdefg", 7);
+	if (ret != 7) {
+		err_sys("write");
+	}
+
+	ret = ftruncate(fd_in, page_size * 2);
+	if (ret < 0)
+		err_sys("ftruncate");
+
+	ret = fstat(fd_in, &statbuf);
+	if (ret < 0)
+		err_sys("fstat");
+	file_size = statbuf.st_size;
+
+
+	fsync(fd_in);
+
+	src = mmap(0, page_size*2, PROT_READ|PROT_WRITE, MAP_SHARED, fd_in, 0);
+	if (src == MAP_FAILED) {
+		err_sys("map");
+	}
+
+	*((char*)src + 7) = 8;
+	memcpy(src, "1234567", 7);
+
+	printf("%s\n", src);
+
+	ret = mprotect((char*)src, 4, PROT_READ);
+	if (ret < 0)
+		err_sys("mprotect");
+
+	*((char*)src + 4096) = 10;
+	*((char*)src + 4095) = 9;
+
+	munmap(src, page_size);
+
 	return 0;
 }
