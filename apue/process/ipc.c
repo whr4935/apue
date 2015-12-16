@@ -3,7 +3,8 @@
 
 int TEST_ipc()
 {
-	test_pipe();
+	//test_pipe();
+	test_pipe_page();
 
 	return 0;
 }
@@ -102,3 +103,66 @@ int test_pipe()
 
 	exit(0);
 }
+
+int test_pipe_page()
+{
+#define		DEF_PAGER		 "/usr/bin/less"
+
+	int ret;
+	int fd[2];
+	int pid;
+	FILE *fp;
+	char line[MAXLINE];
+	int n;
+	char *pager;
+	char *argv0;
+
+	if ((fp = fopen("pipe_page.txt", "r")) < 0)
+		err_sys("fopen");
+
+	if (pipe(fd) < 0)
+		err_sys("pipe");
+
+	if ((pid = fork()) < 0)
+		err_sys("fork");
+	else if (pid > 0) {
+		close(fd[0]);
+
+		while (fgets(line, MAXLINE, fp) != NULL) {
+			n = strlen(line);
+			if (write(fd[1], line, n) != n)
+				err_sys("write");
+		}
+		if (ferror(fp))
+			err_sys("fgets error");
+
+		close(fd[1]);
+
+		if (waitpid(pid, NULL, 0) < 0)
+			err_sys("waitpid");
+	} else {
+		close(fd[1]);
+
+		if (fd[0] != STDIN_FILENO) {
+			if (dup2(fd[0], STDIN_FILENO) != STDIN_FILENO) {
+				err_sys("dup2");
+			}
+			close(fd[0]);
+		}
+
+		if ((pager = getenv("PAGER")) == NULL) {
+			pager = DEF_PAGER;
+		}
+
+		if ((argv0 = strrchr(pager, '/')) != NULL)
+			argv0++;
+		else
+			argv0 = pager;
+
+		if (execl(pager, argv0, (char*)0) < 0)
+			err_sys("execl");
+	}
+
+	exit(0);
+}
+
