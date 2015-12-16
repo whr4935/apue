@@ -1,10 +1,16 @@
 #include "ipc.h"
 #include <includes.h>
 
+//////////////////////////////////////////////////////////////////////////
+static int coprocess_add2();
+
+//////////////////////////////////////////////////////////////////////////
 int TEST_ipc()
 {
 	//test_pipe();
-	test_pipe_page();
+	//test_pipe_page();
+	//coprocess_add2();
+	test_coprocess();
 
 	return 0;
 }
@@ -164,5 +170,110 @@ int test_pipe_page()
 	}
 
 	exit(0);
+}
+
+static int coprocess_add2()
+{
+	int a1, a2;
+	char buf[MAXLINE];
+	int n;
+
+#if 0
+	while (read(STDIN_FILENO, buf, MAXLINE) > 0) {
+		if (sscanf(buf, "%d%d", &a1, &a2) == 2) {
+			sprintf(buf, "%d\n", a1 + a2);
+			n = strlen(buf);
+			if (write(STDOUT_FILENO, buf, n) != n)
+				err_sys("write");
+		} else {
+			sprintf(buf, "Invalid arguments!\n");
+			n = strlen(buf);
+			if (write(STDOUT_FILENO, buf, n) != n)
+				err_sys("write");
+		}
+	}
+#else
+
+	setvbuf(stdin, NULL, _IOLBF, 0);
+	setvbuf(stdout, NULL, _IOLBF, 0);
+
+	while (fgets(buf, 100, stdin) != NULL) {
+		if (sscanf(buf, "%d%d", &a1, &a2) == 2) {
+			printf("%d\n", a1 + a2);
+		} else {
+			printf("invalid arguments!\n");
+		}
+	}
+#endif
+
+	exit(0);
+}
+
+static void sig_pipe(int sig)
+{
+	puts("SIGPIPE!");
+	exit(1);
+}
+
+int test_coprocess()
+{
+	int ret;
+	int fd1[2], fd2[2];
+	pid_t pid;
+	char buf[100];
+	int n;
+
+	signal(SIGPIPE, sig_pipe);
+
+	if (pipe(fd1) < 0 || pipe(fd2) < 0)
+		err_sys("pipe");
+
+	if ((pid = fork()) < 0) {
+		err_sys("fork");
+	} else if (pid == 0) {
+		close(fd1[1]);
+		close(fd2[0]);
+
+		if (fd1[0] != STDIN_FILENO) {
+			if (dup2(fd1[0], STDIN_FILENO) < 0)
+				err_sys("dup2");
+			close(fd1[0]);
+		}
+
+		if (fd2[1] != STDOUT_FILENO) {
+			if (dup2(fd2[1], STDOUT_FILENO) < 0)
+				err_sys("dup2");
+			close(fd2[1]);
+		}
+
+		if (execl("add2", "add2", (char*)0) < 0)
+			err_sys("execl");
+		exit(1);
+	} else {
+		close(fd1[0]);
+		close(fd2[1]);
+
+		while ((fgets(buf, 100, stdin)) != NULL) {
+			n = strlen(buf);
+			if ((write(fd1[1], buf, n)) != n)
+				err_sys("write");
+			if ((n = read(fd2[0], buf, 100)) < 0)
+				err_sys("read");
+			else if (n == 0) {
+				err_msg("child closed pipe");
+				break;
+			}
+			buf[n] = '\0';
+		//	fputs(buf, stdout);
+			printf("get result: %s", buf);
+		}
+
+		if (ferror(stdin))
+			err_sys("fgets");
+
+		exit(0);
+	}
+
+	return 0;
 }
 
