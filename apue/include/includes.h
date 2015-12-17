@@ -14,6 +14,9 @@
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <sys/sem.h>
 
 //////////////////////////////////////////////////////////////////////////
 /*
