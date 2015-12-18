@@ -903,7 +903,7 @@ int test_network_ipc()
 	}
 #endif
 
-#if 1
+#if 0
 	
 #if 0
 	ret = getaddrinfo(BAIDU_HOST, "nfs", NULL, &p_info);
@@ -929,6 +929,10 @@ int test_network_ipc()
 	printf("name: %s\n", host_namebuf);
 	printf("service: %s\n", service_namebuf);
 #endif
+
+	printf("sockaddr size: %d\n", sizeof(struct sockaddr));
+	printf("ipv4 sockaddr size: %d\n", sizeof(struct sockaddr_in));
+	printf("ipv6 sockaddr size: %d\n", sizeof(struct sockaddr_in6));
 
 	return 0;
 }
