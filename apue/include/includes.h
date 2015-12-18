@@ -17,6 +17,12 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/sem.h>
+#include <sys/shm.h>
+#include <semaphore.h>
+
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <sys/socket.h>
 
 //////////////////////////////////////////////////////////////////////////
 /*

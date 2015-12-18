@@ -12,7 +12,10 @@ int TEST_ipc()
 	//coprocess_add2();
 	//test_coprocess();
 	//test_msgqueue();
-	test_semaphore();
+	//test_semaphore();
+	//test_shm();
+	//test_posix_semaphore();
+	test_network_ipc();
 
 	return 0;
 }
@@ -79,16 +82,16 @@ int test_pipe()
 				break;
 			}
 #else
-		//	ret = fread(buf, 1, 5, stdin);
+			//	ret = fread(buf, 1, 5, stdin);
 			gets(buf);
 			printf("gets buf: %s\n", buf);
 
-		//	break;
+			//	break;
 #endif
 
 			sleep(1);
 
-		//	break;
+			//	break;
 		}
 	} else {
 		close(fd[0]);
@@ -266,7 +269,7 @@ int test_coprocess()
 				break;
 			}
 			buf[n] = '\0';
-		//	fputs(buf, stdout);
+			//	fputs(buf, stdout);
 			printf("get result: %s", buf);
 		}
 
@@ -296,9 +299,9 @@ int test_msgqueue()
 	key_t msg_key = MSG_QUEUE_KEY;
 	struct msg_struct msg, *pMsg;
 	int count = 0;
-	
-// 	printf("sizeof struct msg_struct is %d\n", sizeof(struct msg_struct));
-// 	exit(0);
+
+	// 	printf("sizeof struct msg_struct is %d\n", sizeof(struct msg_struct));
+	// 	exit(0);
 
 	pMsg = (struct msg_struct*)malloc((sizeof(struct msg_struct) + MSG_BUF_LEN));
 
@@ -372,6 +375,7 @@ int test_semaphore()
 	int ret;
 	pid_t pid;
 	key_t sem_key;
+	int sem_id;
 	union semun s_um;
 	struct semid_ds s_ds;
 
@@ -379,7 +383,7 @@ int test_semaphore()
 
 	sem_key = semget(SEM_KEY, 0, 0);
 	if (sem_key < 0) {
-		sem_key = semget(SEM_KEY, SEM_TOTAL, IPC_CREAT|IPC_EXCL|0666);
+		sem_key = semget(SEM_KEY, SEM_TOTAL, IPC_CREAT | IPC_EXCL | 0666);
 		if (sem_key < 0)
 			err_sys("semget");
 	}
@@ -389,6 +393,542 @@ int test_semaphore()
 		err_sys("semctl");
 
 
+
+	return 0;
+}
+
+#define		SHM_KEY		6
+#define		SHM_SIZE	10
+int test_shm()
+{
+	int ret;
+	key_t key;
+	int shm_id;
+	pid_t pid;
+	void *addr;
+	int val;
+
+	key = SHM_KEY;
+
+	srand(time(NULL));
+	val = rand() % 1000;
+
+	shm_id = shmget(key, 0, 0);
+	if (shm_id < 0) {
+		shm_id = shmget(key, SHM_SIZE, IPC_CREAT | IPC_EXCL | 0666);
+		if (shm_id < 0)
+			err_sys("shmget");
+	}
+
+	TELL_WAIT();
+
+	if ((pid = fork()) < 0) {
+		err_sys("fork");
+	} else if (pid == 0) {
+		WAIT_PARENT();
+		addr = shmat(shm_id, 0, SHM_RDONLY);
+		if (addr == -1) {
+			goto child_exit;
+		}
+
+		val = ((int*)addr)[0];
+		printf("child get value: %d\n", val);
+
+		//	*(int*)addr = 89;
+
+	child_exit:
+		printf("child ready exit...\n");
+		TELL_PARENT(getppid());
+		exit(0);
+	} else {
+		addr = shmat(shm_id, 0, 0);
+		if (addr == -1) {
+			err_ret("shmat");
+			ret = shmctl(shm_id, IPC_RMID, 0);
+			if (ret < 0)
+				err_sys("shmctl");
+		}
+
+		*((int*)addr) = val;
+		printf("parent set value %d\n", val);
+
+		ret = shmdt(addr);
+		if (ret < 0)
+			err_sys("shmdt");
+
+		TELL_CHILD(pid);
+		WAIT_CHILD();
+
+
+		addr = shmat(shm_id, 0, SHM_RDONLY);
+		if (addr == -1) {
+			err_ret("shmat");
+			ret = shmctl(shm_id, IPC_RMID, 0);
+			if (ret < 0)
+				err_sys("shmctl");
+		}
+		((char*)addr)[0] = 2;
+
+		printf("parent ready exit...\n");
+
+		ret = shmctl(shm_id, IPC_RMID, 0);
+		if (ret < 0)
+			err_sys("shmctl");
+	}
+
+	exit(0);
+
+	return 0;
+}
+
+#define		POSIX_SEM_KEY	6
+#define		POSIX_SEM_VALUE	0
+
+#define		USE_NAMED_POSIX_SEM		0
+
+int test_posix_semaphore()
+{
+	int ret;
+	char namebuf[20];
+	sem_t *p_sem;
+	sem_t sem;
+	pid_t pid;
+	int val = 0;
+	int shm_id;
+	int *addr;
+	struct timespec t_spec;
+
+#if USE_NAMED_POSIX_SEM
+	sprintf(namebuf, "/%d.%d", getpid(), getppid());
+	p_sem = sem_open(namebuf, 0);
+	if (p_sem == SEM_FAILED) {
+		p_sem = sem_open(namebuf, O_CREAT|O_EXCL, 0666, POSIX_SEM_VALUE);
+		if (p_sem == SEM_FAILED) {
+			err_sys("sem_open");
+		}
+	}
+	ret = sem_unlink(namebuf);
+	if (ret < 0)
+		err_sys("sem_unlink");
+#else
+	ret = sem_init(&sem, 1, POSIX_SEM_VALUE);
+	if (ret < 0) {
+		err_sys("sem_init");
+	}
+	p_sem = &sem;
+#endif
+
+	shm_id = shmget(SHM_KEY, 0, 0);
+	if (shm_id < 0) {
+		shm_id = shmget(SHM_KEY, sizeof(int), IPC_CREAT | IPC_EXCL | 0666);
+		if (shm_id < 0)
+			err_sys("shmget");
+	}
+
+	if ((pid = fork()) < 0) {
+		err_sys("fork");
+	} else if (pid == 0) {
+		addr = shmat(shm_id, 0, 0);
+		if (addr == -1) {
+			err_sys("shmat");
+		}
+
+		clock_gettime(CLOCK_REALTIME, &t_spec);
+		t_spec.tv_sec += 1;
+		ret = sem_timedwait(p_sem, &t_spec);
+		if (ret < 0)
+			err_sys("child sem_wait");
+		val = *addr;
+		printf("child get value %d\n", val);
+
+		*addr = 2 * val;
+		printf("child set value to %d\n", *addr);
+
+		ret = sem_getvalue(p_sem, &val);
+		//	printf("sem value is %d\n", val);
+
+		sem_post(p_sem);
+
+#if USE_NAMED_POSIX_SEM
+		ret = sem_close(p_sem);
+		if (ret < 0)
+			err_sys("sem_close");
+#else
+		ret = sem_destroy(p_sem);
+		if (ret < 0)
+			err_sys("sem_destroy");
+#endif
+
+		printf("child exit...\n");
+		exit(1);
+	} else {
+		addr = shmat(shm_id, 0, 0);
+		if (addr == -1) {
+			err_ret("shmat");
+			exit(1);
+		}
+
+		//		sem_wait(p_sem);
+		usleep(100000);
+		printf("parent set value 23\n");
+		*addr = 23;
+		sem_post(p_sem);
+
+		printf("parent sleep...\n");
+		sleep(2);
+
+		ret = sem_wait(p_sem);
+		if (ret < 0)
+			err_sys("sem_wait");
+		val = *addr;
+		log_info("parent get value %d\n", val);
+		ret = sem_post(p_sem);
+		if (ret < 0)
+			err_sys("sem_post");
+		ret = shmdt(addr);
+		if (ret < 0) {
+			err_ret("shmdt");
+			exit(1);
+		}
+
+#if USE_NAMED_POSIX_SEM
+		ret = sem_close(p_sem);
+		if (ret < 0)
+			err_sys("sem_close");
+#else
+		ret = sem_destroy(p_sem);
+		if (ret < 0)
+			err_sys("sem_destroy");
+#endif
+	}
+
+	exit(0);
+
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+#define		LOCAL_HOST		"127.0.0.1"
+#define		BAIDU_HOST		"www.baidu.com"
+#define		ZOWIETEK_HOST	"www.zowietek.com"
+
+static void print_hostent(struct hostent *h_ent)
+{
+	char **p;
+	char nbuf[INET_ADDRSTRLEN];
+
+	printf("============================\n");
+	printf("host name: %s\n", h_ent->h_name);
+	for (p = h_ent->h_aliases; *p; ++p) {
+		printf("name alias: %s\n", *p);
+	}
+	printf("address type: %s\n", h_ent->h_addrtype == 2 ? "AF_INET" : (h_ent->h_addrtype == 23 ? "AF_INET6" : "unknown"));
+	printf("address length: %d\n", h_ent->h_length);
+	for (p = h_ent->h_addr_list; *p; ++p) {
+		//printf("network address: %s\n", inet_ntoa(*(struct in_addr*)*p));
+		printf("network address: %s\n", inet_ntop(AF_INET, (in_addr_t*)*p, nbuf, INET_ADDRSTRLEN));
+	}
+	printf("============================\n\n");
+}
+
+static void print_netent(struct netent *n_net)
+{
+	char **p;
+
+	printf("============================\n");
+	printf("network name: %s\n", n_net->n_name);
+	for (p = n_net->n_aliases; *p; ++p) {
+		printf("alternate network name: %s\n", *p);
+	}
+	printf("address type: %s\n", n_net->n_addrtype == 2 ? "AF_INET" : (n_net->n_addrtype == 23 ? "AF_INET6" : "unknown"));
+	printf("network number: %d\n", ntohl(n_net->n_net));
+	printf("============================\n\n");
+}
+
+static void print_protoent(struct protoent *p_net)
+{
+	char **p;
+
+	printf("============================\n");
+	printf("protocol name: %s\n", p_net->p_name);
+	for (p = p_net->p_aliases; *p; ++p) {
+		printf("alias protocol name: %s\n", *p);
+	}
+	printf("protocol number: %d\n", p_net->p_proto);
+	printf("============================\n\n");
+}
+
+static void print_servent(struct servent *s_ent)
+{
+	char **p;
+
+	printf("============================\n");
+	printf("service name: %s\n", s_ent->s_name);
+	for (p = s_ent->s_aliases; *p; ++p) {
+		printf("alias service name: %s\n", *p);
+	}
+	printf("service port: %d\n", s_ent->s_port);
+	printf("service protocol: %s\n", s_ent->s_proto);
+	printf("============================\n\n");
+}
+
+static char* netfamily_str(int net_family)
+{
+	char *p = NULL;
+
+	switch (net_family) {
+	case AF_INET:
+		p = "AF_INET";
+		break;
+
+	case AF_INET6:
+		p = "AF_INET6";
+		break;
+
+	case AF_UNIX:
+		p = "UNIX";
+		break;
+
+	case AF_UNSPEC:
+		p = "Unspecified";
+		break;
+
+	default:
+		p = "Unknown net family";
+		break;
+	}
+
+	return p;
+}
+
+static char* socktype_str(int socktype)
+{
+	char *p = NULL;
+
+	switch (socktype) {
+	case SOCK_STREAM:
+		p = "stream";
+		break;
+
+	case SOCK_DGRAM:
+		p = "datagram";
+		break;
+
+	case SOCK_SEQPACKET:
+		p = "seqpacket";
+		break;
+
+	case SOCK_RAW:
+		p = "raw";
+		break;
+
+	default:
+		p = "Unknown socktype";
+	}
+
+	return p;
+}
+
+static char* protocol_str(int proto)
+{
+	char *p = NULL;
+
+	switch (proto) {
+	case 0:
+		p = "default protocl";
+		break;
+
+	case IPPROTO_TCP:
+		p = "TCP";
+		break;
+
+	case IPPROTO_UDP:
+		p = "UDP";
+		break;
+
+	case IPPROTO_RAW:
+		p = "raw";
+		break;
+
+	default:
+		p = "Uknown protocol";
+		break;
+	}
+
+	return p;
+}
+
+static char* addrinfo_flags_str(int flags)
+{
+	static char buf[100];
+
+	if (flags == 0) {
+		sprintf(buf, "0");
+	} else {
+		if (flags & AI_PASSIVE) {
+			sprintf(buf, " passive");
+		}
+		if (flags & AI_CANONNAME) {
+			sprintf(buf, "canonname");
+		}
+		if (flags & AI_NUMERICHOST) {
+			sprintf(buf, " numhost");
+		}
+		if (flags & AI_NUMERICSERV) {
+			sprintf(buf, "numserv");
+		}
+		if (flags & AI_V4MAPPED) {
+			sprintf(buf, "v4mapped");
+		}
+		if (flags & AI_ALL) {
+			sprintf(buf, " all");
+		}
+	}
+
+	return buf;
+}
+
+static void print_addrinfo(struct addrinfo* p_info)
+{
+	struct sockaddr_in *in_addr;
+
+	printf("============================\n");
+	printf("ai_flags: %s\n", addrinfo_flags_str(p_info->ai_flags));
+	printf("ai_family: %s\n", netfamily_str(p_info->ai_family));
+	printf("ai_socktype: %s\n", socktype_str(p_info->ai_socktype));
+	printf("ai_protocol: %s\n", protocol_str(p_info->ai_protocol));
+	printf("addr length: %d\n", p_info->ai_addrlen);
+	if (p_info->ai_family == AF_INET) {
+		in_addr = (struct sockaddr_in *)p_info->ai_addr;
+		printf("socket addr: %s:%d\n", inet_ntoa(in_addr->sin_addr), in_addr->sin_port);
+		printf("canonical host name: %s\n", p_info->ai_canonname);
+		printf("============================\n\n");
+	}
+}
+
+int test_network_ipc()
+{
+	int ret;
+	in_addr_t naddr;
+	struct in_addr in_naddr;
+	char nbuf[INET_ADDRSTRLEN];
+	char *paddr;
+	struct hostent *h_ent;
+	struct netent* n_net;
+	struct protoent* p_ent;
+	struct servent* s_ent;
+	struct addrinfo n_info;
+	struct addrinfo *p_info;
+	struct sockaddr_in addr_in, *p_addr_in;
+	char host_namebuf[50];
+	char service_namebuf[50];
+
+#if 0
+	naddr = inet_addr(LOCAL_HOST);
+	in_naddr.s_addr = naddr;
+	paddr = inet_ntoa(in_naddr);
+	printf("addr: %s(%#x)\n", paddr, (long)naddr);
+
+	paddr = inet_ntop(AF_INET, &naddr, nbuf, INET_ADDRSTRLEN);
+	if (paddr == NULL)
+		err_sys("inet_ntop");
+	printf("inet_ntop: %s %s\n", paddr, nbuf);
+
+	ret = inet_pton(AF_INET, LOCAL_HOST, &naddr);
+	if (ret < 0)
+		err_sys("inet_pton");
+	printf("naddr = %#x\n", naddr);
+#endif
+
+#if 0
+	sethostent(1);
+	while ((h_ent = gethostent()) != NULL) {
+		print_hostent(h_ent);
+	}
+	endhostent();
+#endif
+
+#if 0
+	h_ent = gethostbyname(BAIDU_HOST);
+	if (h_ent == NULL)
+		err_sys("gethostbyname");
+	print_hostent(h_ent);
+
+	h_ent = gethostbyname(ZOWIETEK_HOST);
+	if (h_ent == NULL)
+		err_sys("gethostbyname");
+	print_hostent(h_ent);
+
+	h_ent = gethostbyaddr(&in_naddr, sizeof(struct in_addr), AF_INET);
+	if (h_ent < 0)
+		err_sys("gethostbyaddr");
+	print_hostent(h_ent);
+#endif
+
+#if 0
+	setnetent(1);
+	while ((n_net = getnetent()) != NULL) {
+		print_netent(n_net);
+	}
+	endnetent();
+
+#endif
+
+#if 0
+	setprotoent(1);
+	while ((p_ent = getprotoent()) != NULL) {
+		print_protoent(p_ent);
+	}
+	endprotoent();
+#endif
+
+#if 0
+	setservent(1);
+	while ((s_ent = getservent()) != NULL) {
+		print_servent(s_ent);
+	}
+	endservent();
+#endif
+
+#if 0
+	ret = getaddrinfo(BAIDU_HOST, "nfs", NULL, &p_info);
+	if (ret != 0) {
+		printf("%s\n", gai_strerror(ret));
+		exit(1);
+	}
+
+	while (p_info) {
+		print_addrinfo(p_info);
+		p_info = p_info->ai_next;
+	}
+#endif
+
+#if 1
+	
+#if 0
+	ret = getaddrinfo(BAIDU_HOST, "nfs", NULL, &p_info);
+	if (ret != 0) {
+		printf("%s\n", gai_strerror(ret));
+		exit(1);
+	}
+	p_addr_in = p_info->ai_addr;
+#else
+	memset(&addr_in, 0, sizeof(addr_in));
+	addr_in.sin_family = AF_INET;
+	addr_in.sin_addr.s_addr = inet_addr(LOCAL_HOST);
+	addr_in.sin_port = 264;
+	p_addr_in = &addr_in;
+#endif
+
+	ret = getnameinfo(p_addr_in, sizeof(struct sockaddr_in), host_namebuf, 50, \
+		service_namebuf, 50, NI_NAMEREQD | NI_NOFQDN);
+	if (ret != 0) {
+		printf("%s\n", gai_strerror(ret));
+		exit(1);
+	}
+	printf("name: %s\n", host_namebuf);
+	printf("service: %s\n", service_namebuf);
+#endif
 
 	return 0;
 }

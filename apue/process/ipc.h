@@ -8,5 +8,8 @@ int test_pipe_page();
 int test_coprocess();
 int test_msgqueue();
 int test_semaphore();
+int test_shm();
+int test_posix_semaphore();
+int test_network_ipc();
 
 #endif // !_TEST_IPC_H
