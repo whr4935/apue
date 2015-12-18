@@ -14,8 +14,8 @@ int TEST_ipc()
 	//test_msgqueue();
 	//test_semaphore();
 	//test_shm();
-	//test_posix_semaphore();
-	test_network_ipc();
+	test_posix_semaphore();
+	//test_network_ipc();
 
 	return 0;
 }
@@ -482,6 +482,7 @@ int test_shm()
 }
 
 #define		POSIX_SEM_KEY	6
+#define		POSIX_SHM_SEM_KEY	7
 #define		POSIX_SEM_VALUE	0
 
 #define		USE_NAMED_POSIX_SEM		0
@@ -491,12 +492,13 @@ int test_posix_semaphore()
 	int ret;
 	char namebuf[20];
 	sem_t *p_sem;
-	sem_t sem;
 	pid_t pid;
 	int val = 0;
 	int shm_id;
 	int *addr;
 	struct timespec t_spec;
+	int shm_sem;
+	sem_t *p_shm_sem;
 
 #if USE_NAMED_POSIX_SEM
 	sprintf(namebuf, "/%d.%d", getpid(), getppid());
@@ -507,15 +509,27 @@ int test_posix_semaphore()
 			err_sys("sem_open");
 		}
 	}
-	ret = sem_unlink(namebuf);
+	ret = sem_unlink(namebuf);		//删除命令信号量
 	if (ret < 0)
 		err_sys("sem_unlink");
 #else
-	ret = sem_init(&sem, 1, POSIX_SEM_VALUE);
+	shm_sem = shmget(POSIX_SHM_SEM_KEY, 0, 0);
+	if (shm_sem < 0) {
+		shm_sem = shmget(POSIX_SHM_SEM_KEY, sizeof(sem_t), IPC_CREAT | IPC_EXCL | 0600);
+		if (shm_sem < 0) {
+			err_sys("shmget");
+		}
+	}
+	p_shm_sem = shmat(shm_sem, 0, 0);
+	if (p_shm_sem == -1) {
+		err_sys("shmat");
+	}
+
+	ret = sem_init(p_shm_sem, 1, POSIX_SEM_VALUE);		//匿名信号量需要创建在共享内存区才能跨进程
 	if (ret < 0) {
 		err_sys("sem_init");
 	}
-	p_sem = &sem;
+	p_sem = p_shm_sem;
 #endif
 
 	shm_id = shmget(SHM_KEY, 0, 0);
@@ -534,7 +548,7 @@ int test_posix_semaphore()
 		}
 
 		clock_gettime(CLOCK_REALTIME, &t_spec);
-		t_spec.tv_sec += 1;
+		t_spec.tv_sec += 3;
 		ret = sem_timedwait(p_sem, &t_spec);
 		if (ret < 0)
 			err_sys("child sem_wait");
@@ -545,9 +559,12 @@ int test_posix_semaphore()
 		printf("child set value to %d\n", *addr);
 
 		ret = sem_getvalue(p_sem, &val);
-		//	printf("sem value is %d\n", val);
+	//	printf("sem value is %d\n", val);
 
 		sem_post(p_sem);
+
+		ret = sem_getvalue(p_sem, &val);
+		printf("[sem] value is %d\n", val);
 
 #if USE_NAMED_POSIX_SEM
 		ret = sem_close(p_sem);
@@ -577,6 +594,9 @@ int test_posix_semaphore()
 		printf("parent sleep...\n");
 		sleep(2);
 
+		ret = sem_getvalue(p_sem, &val);
+	//	printf("[sem] value is %d\n", val);
+
 		ret = sem_wait(p_sem);
 		if (ret < 0)
 			err_sys("sem_wait");
@@ -591,6 +611,10 @@ int test_posix_semaphore()
 			exit(1);
 		}
 
+		ret = shmctl(shm_id, IPC_RMID, 0);
+		if (ret < 0)
+			err_sys("shmctl");
+
 #if USE_NAMED_POSIX_SEM
 		ret = sem_close(p_sem);
 		if (ret < 0)
@@ -599,6 +623,14 @@ int test_posix_semaphore()
 		ret = sem_destroy(p_sem);
 		if (ret < 0)
 			err_sys("sem_destroy");
+
+		ret = shmdt(p_sem);
+		if (ret < 0)
+			err_sys("shmdt");
+
+		ret = shmctl(shm_sem, IPC_RMID, 0);
+		if (ret < 0)
+			err_sys("shmctl");
 #endif
 	}
 
@@ -823,7 +855,7 @@ int test_network_ipc()
 	char host_namebuf[50];
 	char service_namebuf[50];
 
-#if 0
+#if 1
 	naddr = inet_addr(LOCAL_HOST);
 	in_naddr.s_addr = naddr;
 	paddr = inet_ntoa(in_naddr);
@@ -859,6 +891,7 @@ int test_network_ipc()
 		err_sys("gethostbyname");
 	print_hostent(h_ent);
 
+	in_naddr.s_addr = inet_addr(LOCAL_HOST);
 	h_ent = gethostbyaddr(&in_naddr, sizeof(struct in_addr), AF_INET);
 	if (h_ent < 0)
 		err_sys("gethostbyaddr");
@@ -906,7 +939,7 @@ int test_network_ipc()
 #if 0
 	
 #if 0
-	ret = getaddrinfo(BAIDU_HOST, "nfs", NULL, &p_info);
+	ret = getaddrinfo(BAIDU_HOST, "ssh", NULL, &p_info);
 	if (ret != 0) {
 		printf("%s\n", gai_strerror(ret));
 		exit(1);
@@ -916,7 +949,7 @@ int test_network_ipc()
 	memset(&addr_in, 0, sizeof(addr_in));
 	addr_in.sin_family = AF_INET;
 	addr_in.sin_addr.s_addr = inet_addr(LOCAL_HOST);
-	addr_in.sin_port = 264;
+	addr_in.sin_port = 22;
 	p_addr_in = &addr_in;
 #endif
 
@@ -930,9 +963,11 @@ int test_network_ipc()
 	printf("service: %s\n", service_namebuf);
 #endif
 
+#if 0
 	printf("sockaddr size: %d\n", sizeof(struct sockaddr));
 	printf("ipv4 sockaddr size: %d\n", sizeof(struct sockaddr_in));
 	printf("ipv6 sockaddr size: %d\n", sizeof(struct sockaddr_in6));
+#endif
 
 	return 0;
 }
