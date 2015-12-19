@@ -17,8 +17,11 @@ int TEST_ipc()
 	//test_posix_semaphore();
 	//test_network_ipc();
 
-	test_ruptime_server();
+	//test_ruptime_server();
 	//test_ruptime_client();
+
+	//test_uptime_server_udp();
+	test_uptime_client_udp();
 
 	return 0;
 }
@@ -711,7 +714,7 @@ static void print_servent(struct servent *s_ent)
 	for (p = s_ent->s_aliases; *p; ++p) {
 		printf("alias service name: %s\n", *p);
 	}
-	printf("service port: %d\n", s_ent->s_port);
+	printf("service port: %d\n", ntohs(s_ent->s_port));
 	printf("service protocol: %s\n", s_ent->s_proto);
 	printf("============================\n\n");
 }
@@ -997,7 +1000,7 @@ int test_network_ipc()
 #define		MAXSLEEP 4
 int connect_retry(int domain, int type, int protocol, const struct sockaddr *addr, socklen_t alen)
 {
-	int numsec, fd;
+	int numsec, fd;      
 
 	for (numsec = 1; numsec <= MAXSLEEP; numsec <<= 1) {
 		if ((fd = socket(domain, type, protocol)) < 0)
@@ -1017,9 +1020,14 @@ int initserver(int type, const struct sockaddr *addr, socklen_t alen, int qlen)
 {
 	int fd;
 	int err = 0;
+	int reuse = 1;
 
 	if ((fd = socket(addr->sa_family, type, 0)) < 0)
 		return -1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(int)) < 0)
+		goto errout;
+
 	if (bind(fd, addr, alen) < 0) {
 		server_log(LOG_ERR, "bind");
 		goto errout;
@@ -1043,11 +1051,16 @@ errout:
 
 #define		BUFLEN				128
 #define		QLEN				10
+#define		MAXADDRLEN			256
+
+#define		POPEN_UPTIME	0
 
 static void serve(int sockfd)
 {
 	int clfd;
 	FILE *fp;
+	pid_t pid;
+	int status;
 	char buf[BUFLEN];
 	struct sockaddr_in in_addr;
 	socklen_t slen = sizeof(struct sockaddr_in);
@@ -1074,6 +1087,7 @@ static void serve(int sockfd)
 		printf("\nclient information:\n");
 		print_sockaddr_in(&in_addr);
 
+#if POPEN_UPTIME
 		if ((fp = popen("/usr/bin/uptime", "r")) == NULL) {
 			sprintf(buf, "error: %s\n", strerror(errno));
 			send(clfd, buf, strlen(buf), 0);
@@ -1083,6 +1097,24 @@ static void serve(int sockfd)
 			pclose(fp);
 		}
 		close(clfd);
+#else
+		if ((pid = fork()) < 0) {
+			server_log(LOG_ERR, "fork");
+		} else if (pid == 0) {
+			if (dup2(clfd, STDOUT_FILENO) != STDOUT_FILENO || 
+				dup2(clfd, STDERR_FILENO) != STDERR_FILENO) {
+				server_log(LOG_ERR, "dup2");
+				exit(1);
+			}
+
+			execl("/usr/bin/uptime", "uptime", (char*)0);
+			server_log(LOG_ERR, "execl");
+			exit(1);
+		} else {
+			close(clfd);
+			waitpid(pid, &status, 0);
+		}
+#endif
 	}
 }
 
@@ -1126,7 +1158,7 @@ int test_ruptime_server()
 	hint.ai_canonname = NULL;
 	hint.ai_addr = NULL;
 	hint.ai_next = NULL;
-	if ((err = getaddrinfo(host, "ruptime", &hint, &alist) != 0)) {
+	if ((err = getaddrinfo(host, "ruptime", &hint, &alist) != 0)) {		//手动在/etc/services文件里添加 ruptime服务项
 		server_log(LOG_ERR, "ruptimed: getaddrinfo: %s", gai_strerror(err));
 		exit(1);
 	}
@@ -1194,5 +1226,181 @@ int test_ruptime_client()
 	}
 
 	err_exit(err, "can't connect to %s", server_addr);
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// UDP uptime server
+void serve_udp(int sockfd)
+{
+	int n;
+	socklen_t alen;
+	FILE *fp;
+	char buf[BUFLEN];
+	char abuf[MAXADDRLEN];
+	struct sockaddr *addr = (struct sockaddr *)abuf;
+
+	set_cloexec(sockfd);
+	for (;;) {
+		alen = MAXADDRLEN;
+		if ((n = recvfrom(sockfd, buf, BUFLEN, 0, addr, &alen)) < 0) {
+			server_log(LOG_ERR, "recvfrom");
+			exit(1);
+		}
+
+		if ((fp = popen("/usr/bin/uptime", "r")) == NULL) {
+			sprintf(buf, "error: %s\n", strerror(errno));
+			sendto(sockfd, buf, strlen(buf), 0, addr, alen);
+		} else {
+			if (fgets(buf, BUFLEN, fp) != NULL) {
+				sendto(sockfd, buf, strlen(buf), 0, addr, alen);
+			}
+			pclose(fp);
+		}
+	}
+}
+
+int test_uptime_server_udp()
+{
+	int sockfd;
+	char *host;
+	int n;
+	struct addrinfo *alist, *aip, hint;
+	int err;
+	struct sockaddr_in in_addr;
+	socklen_t slen;
+
+	if ((n = sysconf(_SC_HOST_NAME_MAX)) < 0)
+		n = HOST_NAME_MAX;
+	host = malloc(n);
+	if (host == NULL) {
+		server_log(LOG_ERR, "malloc");
+		exit(1);
+	}
+
+	if (gethostname(host, n) < 0) {
+		server_log(LOG_ERR, "gethostname");
+		exit(1);
+	}
+
+	memset(&hint, 0, sizeof(hint));
+	hint.ai_flags = AI_CANONNAME;
+	hint.ai_socktype = SOCK_DGRAM;
+	hint.ai_canonname = NULL;
+	hint.ai_addr = NULL;
+	hint.ai_next = NULL;
+	if ((err = getaddrinfo(host, "ruptime", &hint, &alist)) != 0) {
+		server_log(LOG_ERR, "getaddrinfo: %s\n", gai_strerror(err));
+		exit(1);
+	}
+
+	for (aip = alist; aip != NULL; aip = aip->ai_next) {
+		if ((sockfd = socket(aip->ai_family, SOCK_DGRAM, 0)) < 0) {
+			server_log(LOG_ERR, "socket");
+			exit(1);
+		}
+
+		if ((err = bind(sockfd, aip->ai_addr, aip->ai_addrlen)) < 0) {
+			server_log(LOG_ERR, "bind");
+			exit(1);
+		}
+
+		if (getsockname(sockfd, &in_addr, &slen) < 0) {
+			server_log(LOG_ERR, "getsockname");
+			exit(1);
+		}
+		print_sockaddr_in(&in_addr);
+
+		serve_udp(sockfd);
+
+		server_log(LOG_ERR, "exit");
+		exit(0);
+	}
+	
+	server_log(LOG_ERR, "exit");
+	exit(1);
+
+	return 0;
+}
+
+#define		TIMEOUT		20
+static void sigalrm(int signo)
+{
+
+}
+
+static void print_uptime_udp(int sockfd, struct addrinfo *aip)
+{
+	int n;
+	char buf[BUFLEN];
+
+	buf[0] = 0;
+	if (sendto(sockfd, buf, 1, 0, aip->ai_addr, aip->ai_addrlen) < 0) {
+		server_log(LOG_ERR, "sendto");
+		exit(1);
+	}
+	alarm(TIMEOUT);
+	if((n = recvfrom(sockfd, buf, BUFLEN, 0, NULL, NULL)) < 0) {
+		if (errno != EINTR) {
+			alarm(0);
+		}
+		server_log(LOG_ERR, "recvfrom: %s\n", strerror(errno));
+		exit(1);
+	}
+	alarm(0);
+	write(STDOUT_FILENO, buf, n);
+}
+
+//UDP uptime client
+int test_uptime_client_udp()
+{
+	struct addrinfo *alist, *aip, hint;
+	int err, sockfd;
+	struct sigaction sa;
+	char host[HOST_NAME_MAX];
+	struct servent *ent;
+
+	sa.sa_handler = sigalrm;
+	sa.sa_flags = 0;
+	sigemptyset(&sa.sa_mask);
+	if (sigaction(SIGALRM, &sa, NULL) < 0) {
+		server_log(LOG_ERR, "sigaction");
+		exit(1);
+	}
+
+	if (gethostname(host, HOST_NAME_MAX) < 0) {
+		server_log(LOG_ERR, "gethostname");
+		exit(1);
+	}
+
+	if ((ent = getservbyname("ruptime", "udp")) != NULL) {
+		printf("port = %d\n", ntohs(ent->s_port));
+		print_servent(ent);
+	}
+
+	memset(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_DGRAM;
+	hint.ai_canonname = NULL;
+	hint.ai_addr = NULL;
+	hint.ai_addrlen = NULL;
+	if ((err = getaddrinfo(host, "ruptime", &hint, &alist)) != 0) {
+		server_log(LOG_ERR, "getaddrinfo: %s", gai_strerror(err));
+		exit(1);
+	}
+
+	for (aip = alist; aip != NULL; aip = aip->ai_next) {
+		if ((sockfd = socket(aip->ai_family, SOCK_DGRAM, 0)) < 0) {
+			err = errno;
+		} else {
+			print_sockaddr_in((struct sockaddr_in*)aip->ai_addr);
+
+			print_uptime_udp(sockfd, aip);
+			exit(0);
+		}
+	}
+
+	fprintf(stderr, "can't contact %s: %s\n", host, strerror(errno));
+	exit(1);
+
 	return 0;
 }
