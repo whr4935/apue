@@ -11,5 +11,7 @@ int test_semaphore();
 int test_shm();
 int test_posix_semaphore();
 int test_network_ipc();
+int test_ruptime_server();
+int test_ruptime_client();
 
 #endif // !_TEST_IPC_H

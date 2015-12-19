@@ -8,14 +8,14 @@
     <Filter Include="include">
       <UniqueIdentifier>{19ed8749-fbfa-4803-9d47-e424d8ace352}</UniqueIdentifier>
     </Filter>
-    <Filter Include="dir">
-      <UniqueIdentifier>{a72a3146-834a-4568-b721-30615b5360d2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="misc">
       <UniqueIdentifier>{1852c484-b354-4f6b-9a37-ff6471b79f4f}</UniqueIdentifier>
     </Filter>
     <Filter Include="process">
       <UniqueIdentifier>{542bb3b9-3f94-41e0-b2c2-5455da99404c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="file_dir">
+      <UniqueIdentifier>{a72a3146-834a-4568-b721-30615b5360d2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -30,7 +30,7 @@
   <ItemGroup>
     <ClCompile Include="main.c" />
     <ClCompile Include="dir\file_dir.c">
-      <Filter>dir</Filter>
+      <Filter>file_dir</Filter>
     </ClCompile>
     <ClCompile Include="misc\misc.c">
       <Filter>misc</Filter>
@@ -51,7 +51,7 @@
       <Filter>include</Filter>
     </ClInclude>
     <ClInclude Include="dir\file_dir.h">
-      <Filter>dir</Filter>
+      <Filter>file_dir</Filter>
     </ClInclude>
     <ClInclude Include="misc\misc.h">
       <Filter>misc</Filter>

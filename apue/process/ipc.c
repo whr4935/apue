@@ -14,8 +14,11 @@ int TEST_ipc()
 	//test_msgqueue();
 	//test_semaphore();
 	//test_shm();
-	test_posix_semaphore();
+	//test_posix_semaphore();
 	//test_network_ipc();
+
+	test_ruptime_server();
+	//test_ruptime_client();
 
 	return 0;
 }
@@ -644,6 +647,15 @@ int test_posix_semaphore()
 #define		BAIDU_HOST		"www.baidu.com"
 #define		ZOWIETEK_HOST	"www.zowietek.com"
 
+static void print_sockaddr_in(struct sockaddr_in *in_addr)
+{
+	printf("========= SOCKADDR_IN ===========\n");
+	printf("address family: %s\n", in_addr->sin_family == 2 ? "AF_INET" : (in_addr->sin_family == 23 ? "AF_INET6" : "unknown"));
+	printf("address: %s\n", inet_ntoa(in_addr->sin_addr));
+	printf("port: %d\n", ntohs(in_addr->sin_port));
+	printf("=================================\n");
+}
+
 static void print_hostent(struct hostent *h_ent)
 {
 	char **p;
@@ -832,7 +844,7 @@ static void print_addrinfo(struct addrinfo* p_info)
 	printf("addr length: %d\n", p_info->ai_addrlen);
 	if (p_info->ai_family == AF_INET) {
 		in_addr = (struct sockaddr_in *)p_info->ai_addr;
-		printf("socket addr: %s:%d\n", inet_ntoa(in_addr->sin_addr), in_addr->sin_port);
+		printf("socket addr: %s:%d\n", inet_ntoa(in_addr->sin_addr), ntohs(in_addr->sin_port));
 		printf("canonical host name: %s\n", p_info->ai_canonname);
 		printf("============================\n\n");
 	}
@@ -969,5 +981,218 @@ int test_network_ipc()
 	printf("ipv6 sockaddr size: %d\n", sizeof(struct sockaddr_in6));
 #endif
 
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+#define		DAEMONIZE_RUPTIME_SERVER		0
+
+#if DAEMONIZE_RUPTIME_SERVER
+#define		server_log(arg, fmt, ...)	syslog(arg, fmt, ##__VA_ARGS__)
+#else
+#define		server_log(arg, fmt, ...)	printf(fmt"\n", ##__VA_ARGS__)
+#endif
+
+//////////////////////////////////////////////////////////////////////////
+#define		MAXSLEEP 4
+int connect_retry(int domain, int type, int protocol, const struct sockaddr *addr, socklen_t alen)
+{
+	int numsec, fd;
+
+	for (numsec = 1; numsec <= MAXSLEEP; numsec <<= 1) {
+		if ((fd = socket(domain, type, protocol)) < 0)
+			return -1;
+		if (connect(fd, addr, alen) == 0)
+			return fd;
+
+		close(fd);
+		if (numsec <= MAXSLEEP / 2)
+			sleep(numsec);
+	}
+
+	return -1;
+}
+
+int initserver(int type, const struct sockaddr *addr, socklen_t alen, int qlen)
+{
+	int fd;
+	int err = 0;
+
+	if ((fd = socket(addr->sa_family, type, 0)) < 0)
+		return -1;
+	if (bind(fd, addr, alen) < 0) {
+		server_log(LOG_ERR, "bind");
+		goto errout;
+	}
+	if (type == SOCK_STREAM || type == SOCK_SEQPACKET) {
+		if (listen(fd, qlen) < 0)
+			goto errout;
+	}
+	return fd;
+
+errout:
+	err = errno;
+	close(fd);
+	errno = err;
+	return -1;
+}
+
+#ifndef HOST_NAME_MAX
+#define		HOST_NAME_MAX		256
+#endif
+
+#define		BUFLEN				128
+#define		QLEN				10
+
+static void serve(int sockfd)
+{
+	int clfd;
+	FILE *fp;
+	char buf[BUFLEN];
+	struct sockaddr_in in_addr;
+	socklen_t slen = sizeof(struct sockaddr_in);
+
+	if (getsockname(sockfd, &in_addr, &slen) < 0) {
+		server_log(LOG_ERR, "getsockname");
+		exit(1);
+	}
+	printf("server bound address:\n");
+	print_sockaddr_in(&in_addr);
+
+	set_cloexec(sockfd);
+	for (;;) {
+		if ((clfd = accept(sockfd, NULL, NULL)) < 0) {
+			server_log(LOG_ERR, "ruptimed: accept error: %s", strerror(errno));
+			exit(1);
+		}
+		set_cloexec(clfd);
+		
+		//get client information
+		if (getpeername(clfd, (struct sockaddr*)&in_addr, &slen) < 0) {
+			server_log(LOG_ERR, "getpeername");
+		}
+		printf("\nclient information:\n");
+		print_sockaddr_in(&in_addr);
+
+		if ((fp = popen("/usr/bin/uptime", "r")) == NULL) {
+			sprintf(buf, "error: %s\n", strerror(errno));
+			send(clfd, buf, strlen(buf), 0);
+		} else {
+			while (fgets(buf, BUFLEN, fp) != NULL)
+				send(clfd, buf, strlen(buf), 0);
+			pclose(fp);
+		}
+		close(clfd);
+	}
+}
+
+static void sig_int(int signo)
+{
+	server_log(LOG_INFO, "ruptimed received SIGINT, exit...");
+
+	exit(1);
+}
+
+int test_ruptime_server()
+{
+	struct addrinfo *alist, *aip;
+	struct addrinfo hint;
+	int sockfd, err, n;
+	char *host;
+	struct sockaddr_in *in_addr;
+	struct sigaction sia;
+
+	if ((n = sysconf(_SC_HOST_NAME_MAX)) < 0)
+		n = HOST_NAME_MAX;
+	if ((host = malloc(n)) == NULL)
+		err_sys("malloc");
+	if (gethostname(host, n) < 0)
+		err_sys("gethostname");
+
+#if DAEMONIZE_RUPTIME_SERVER
+	my_daemonize("ruptimed");
+#endif
+
+	sia.sa_flags = 0;
+	sigemptyset(&sia.sa_mask);
+	sia.sa_handler = sig_int;
+	if (sigaction(SIGINT, &sia, NULL) < 0) {
+		syslog(LOG_ERR, "sigaction failed!");
+	}
+
+	memset(&hint, 0, sizeof(hint));
+	hint.ai_flags = AI_CANONNAME;
+	hint.ai_socktype = SOCK_STREAM;
+	hint.ai_canonname = NULL;
+	hint.ai_addr = NULL;
+	hint.ai_next = NULL;
+	if ((err = getaddrinfo(host, "ruptime", &hint, &alist) != 0)) {
+		server_log(LOG_ERR, "ruptimed: getaddrinfo: %s", gai_strerror(err));
+		exit(1);
+	}
+	for (aip = alist; aip != NULL; aip = aip->ai_next) {
+	//	print_addrinfo(aip);
+
+// 		in_addr = (struct sockaddr_in*)aip->ai_addr;
+// 		in_addr->sin_addr.s_addr = INADDR_ANY;
+
+		if ((sockfd = initserver(SOCK_STREAM, aip->ai_addr, aip->ai_addrlen, QLEN)) >= 0) {
+			serve(sockfd);
+			server_log(LOG_ERR, "exit");
+			exit(0);
+		}
+	}
+	server_log(LOG_ERR, "exit");
+	exit(1);
+
+	return 0;
+}
+
+//client
+static void print_uptime(int sockfd)
+{
+	int n;
+	char buf[BUFLEN];
+
+	while ((n = recv(sockfd, buf, BUFLEN, 0)) > 0) {
+		write(STDOUT_FILENO, buf, n);
+		if (n < 0)
+			err_sys("recv");
+	}
+}
+
+int test_ruptime_client()
+{
+	struct addrinfo* alist, *aip;
+	struct addrinfo hint;
+	int sockfd, err;
+	char server_addr[HOST_NAME_MAX];
+
+	if (gethostname(server_addr, HOST_NAME_MAX) < 0)
+		err_sys("gethostname");
+	printf("hostname: %s\n", server_addr);
+
+	memset(&hint, 0, sizeof(hint));
+	hint.ai_socktype = SOCK_STREAM;
+	hint.ai_canonname = NULL;
+	hint.ai_addr = NULL;
+	hint.ai_next = NULL;
+	if ((err = getaddrinfo(server_addr, "ruptime", &hint, &alist)) < 0) {
+		err_quit("getaddrinfo: %s\n", aio_error(err));
+	}
+
+//	print_addrinfo(alist);
+
+	for (aip = alist; aip != NULL; aip = aip->ai_next) {
+		if ((sockfd = connect_retry(aip->ai_family, SOCK_STREAM, 0, aip->ai_addr, \
+			aip->ai_addrlen)) < 0) {
+			err = errno;
+		} else {
+			print_uptime(sockfd);
+			exit(0);
+		}
+	}
+
+	err_exit(err, "can't connect to %s", server_addr);
 	return 0;
 }

@@ -16,12 +16,12 @@ int TEST_process()
 	//test_alarm();
 	//test_sigprocmask();
 	//test_process_group();
-	//test_daemon();
+	test_daemon();
 	//test_unblock_write();
 	//test_record_lock();
 	//test_selct();
 	//test_aio();
-	test_memmap();
+	//test_memmap();
 
 	return 0;
 }
@@ -531,13 +531,12 @@ int test_process_group()
 	return 0;
 }
 
-int test_daemon()
+int my_daemonize(char *cmd)
 {
 	int i, fd0, fd1, fd2;
 	pid_t pid;
 	struct rlimit rl;
 	struct sigaction sa;
-	int cnt = 0;
 
 	umask(0);
 
@@ -562,8 +561,8 @@ int test_daemon()
 	else if (pid != 0)
 		exit(0);
 
-// 	if (chdir("/") < 0)
-// 		err_sys("chdir");
+	if (chdir("/") < 0)
+		err_sys("chdir");
 
 	if (rl.rlim_max == RLIM_INFINITY)
 		rl.rlim_max = 1024;
@@ -571,7 +570,7 @@ int test_daemon()
 	for (i = 0; i < rl.rlim_max; ++i)
 		close(i);
 
-	openlog("apue", LOG_CONS, LOG_USER);
+	openlog(cmd, LOG_CONS, LOG_USER);
 	fd0 = open("/dev/null", O_RDWR);
 	fd1 = dup(fd0);
 	fd2 = dup(fd0);
@@ -580,7 +579,17 @@ int test_daemon()
 		exit(1);
 	}
 
-	syslog(LOG_INFO, "apue loop start...");
+	syslog(LOG_INFO, "%s start...", cmd);
+
+	return 0;
+}
+
+int test_daemon()
+{
+	int cnt = 0;
+	
+	my_daemonize("apue");
+
 	for (;;) {
 		sleep(1);
 

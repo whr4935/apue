@@ -435,3 +435,18 @@ int test_time()
 
 	return 0;
 }
+
+int set_cloexec(int fd)
+{
+	int ret;
+
+	ret = fcntl(fd, F_GETFD, 0);
+	if (ret < 0)
+		err_sys("fcntl");
+	ret |= O_CLOEXEC;
+	ret = fcntl(fd, F_SETFD, ret);
+	if (ret < 0)
+		err_sys("fcntl");
+
+	return 0;
+}

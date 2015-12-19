@@ -109,7 +109,10 @@ err_msg: ≤ª¥Ú”°errno£¨∑µªÿ
 #define		TERMINAL_COLOR_BOLDWHITE	"\033[1m\033[37m" /* Bold White */
 
 //////////////////////////////////////////////////////////////////////////
+//common interfaces
 
+int set_cloexec(int fd);
+int my_daemonize(char *cmd);
 
 
 #endif
