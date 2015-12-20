@@ -17,7 +17,7 @@
 #define		TEST_IPC		1
 
 
-int (*test_func_array[])() = {
+int (*test_func_array[])(int argc, char **argv) = {
 #if TEST_FILE_DIR
 	TEST_file_dir,
 #endif

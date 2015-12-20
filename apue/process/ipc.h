@@ -16,4 +16,13 @@ int test_ruptime_client();
 int test_uptime_server_udp();
 int test_uptime_client_udp();
 
+int test_unix_domain_socket();
+int test_unix_domain_socket_helper(int argc, char **argv);
+int test_unix_socket_bind();
+
+//////////////////////////////////////////////////////////////////////////
+#define		CL_OPEN		"open"
+
+int csopen(char *, int);
+
 #endif // !_TEST_IPC_H

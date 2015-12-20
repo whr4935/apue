@@ -2,7 +2,7 @@
 #include <includes.h>
 #include <gnu/libc-version.h>
 
-int TEST_misc()
+int TEST_misc(int argc, char **argv)
 {
 	return 0;
 }

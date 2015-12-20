@@ -7,7 +7,7 @@
 #include <bits/local_lim.h>
 #include <time.h>
 
-int TEST_file_dir()
+int TEST_file_dir(int argc, char **argv)
 {
 	test_pread();
 //	read_dir();

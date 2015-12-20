@@ -10,6 +10,9 @@
 #include <pwd.h>
 #include <aio.h>
 #include <syslog.h>
+#include <poll.h>
+#include <semaphore.h>
+#include <netdb.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>
@@ -18,11 +21,11 @@
 #include <sys/msg.h>
 #include <sys/sem.h>
 #include <sys/shm.h>
-#include <semaphore.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 
 #include <arpa/inet.h>
-#include <netdb.h>
-#include <sys/socket.h>
+
 
 //////////////////////////////////////////////////////////////////////////
 /*
@@ -113,6 +116,12 @@ err_msg: ≤ª¥Ú”°errno£¨∑µªÿ
 
 int set_cloexec(int fd);
 int my_daemonize(char *cmd);
+int my_serv_listen(const char *name);
+int my_serv_accept(int listenfd, uid_t *uidptr);
+int my_cli_conn(const char *name);
+int my_send_fd(int fd, int fd_to_send);
+int my_send_err(int fd, int status, const char* errmsg);
+int my_recv_fd(int fd, ssize_t(*userfunc)(int, const void*, size_t));
 
 
 #endif

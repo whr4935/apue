@@ -1,7 +1,7 @@
 #include "process.h"
 #include <includes.h>
 
-int TEST_process()
+int TEST_process(int argc, char **argv)
 {
 	//test_env();
 	//test_setjump();

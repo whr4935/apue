@@ -3,7 +3,7 @@
 #include <pthread.h>
 #include <limits.h>
 
-int TEST_thread()
+int TEST_thread(int argc, char **argv)
 {
 	test_pthread_create();
 //	test_pthread_mutex();
