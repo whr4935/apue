@@ -2259,6 +2259,7 @@ static void loop_select(void)
 					log_msg("closed: uid %d, fd %d", uid, clifd);
 					client_del(clifd);
 					FD_CLR(clifd, &allset);
+					close(clifd);
 				} else {
 					handle_request_v2(buf, nread, clifd, client[i].uid);
 				}
@@ -2340,6 +2341,7 @@ static void loop_poll(void)
 hungup:
 					log_msg("closed: uid %d, fd %d", client[i].uid, pollfd[i].fd);
 					client_del(pollfd[i].fd);
+					close(pollfd[i].fd);
 					if (i < numfd -1) {
 						pollfd[i].fd = pollfd[numfd - 1].fd;
 						pollfd[i].events = pollfd[numfd - 1].events;
