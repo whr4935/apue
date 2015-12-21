@@ -2104,7 +2104,7 @@ static int csopen_v2(char *name, int oflag)
 		return -1;
 	}
 
-	return recv_fd(csfd, write);
+	return my_recv_fd(csfd, write);
 }
 
 //////////////////////////////
@@ -2159,8 +2159,8 @@ int test_open_server_v2(int argc, char *argv[])
 	if (debug == 0)
 		my_daemonize("opend_v2");
 
-	loop_select();
-	//	loop_poll();
+	//loop_select();
+	loop_poll();
 
 	return 0;
 }
@@ -2245,7 +2245,7 @@ static void loop_select(void)
 			if (i > maxi)
 				maxi = i;
 			log_msg("new connection: uid %d, fd %d", uid, clifd);
-			continue;
+			continue;				//如果其他fd当前可读，重新调用select会立即返回
 		}
 
 		for (i = 0; i <= maxi; ++i) {
@@ -2268,14 +2268,97 @@ static void loop_select(void)
 	}
 }
 
+static struct pollfd* grow_pollfd(struct pollfd *pfd, int *maxfd)
+{
+	int i;
+	int oldmax = *maxfd;
+	int newmax = oldmax + NALLOC;
+
+	if ((pfd = realloc(pfd, newmax * sizeof(struct pollfd))) == NULL)
+		err_sys("realloc error");
+	for (i = oldmax; i < newmax; ++i) {
+		pfd[i].fd = -1;
+		pfd[i].events = POLLIN;
+		pfd[i].revents = 0;
+	}
+	*maxfd = newmax;
+
+	return pfd;
+}
+
 static void loop_poll(void)
 {
+	int i, listenfd, clifd, nread;
+	char buf[MAXLINE];
+	uid_t uid;
+	struct pollfd *pollfd;
+	int numfd = 1;
+	int maxfd = NALLOC;
 
+	if ((pollfd = malloc(NALLOC * sizeof(struct pollfd))) == NULL)
+		err_sys("malloc");
+
+	for (i = 0; i < NALLOC; ++i) {
+		pollfd[i].fd = -1;
+		pollfd[i].events = POLLIN;
+		pollfd[i].revents = 0;
+	}
+
+	if ((listenfd = serv_listen(CS_OPEN)) < 0)
+		err_sys("serv_listen");
+	client_add(listenfd, 0);
+	pollfd[0].fd = listenfd;
+
+	for (;;) {
+		if (poll(pollfd, numfd, -1) < 0) {
+			err_sys("poll");
+		}
+
+		if (pollfd[0].revents & POLLIN) {
+			clifd = my_serv_accept(listenfd, &uid);
+			if (clifd < 0)
+				log_sys("serv_accept");
+			client_add(clifd, uid);
+
+			if (numfd >= maxfd) {
+				pollfd = grow_pollfd(pollfd, &maxfd);
+			}
+			pollfd[numfd].fd = clifd;
+			pollfd[numfd].events = POLLIN;
+			pollfd[numfd].revents = 0;
+			numfd++;
+			log_msg("new connection: uid %d, fd %d", uid, clifd);
+		}
+
+		for (i = 1; i < numfd; ++i) {
+			if (pollfd[i].revents & POLLHUP) {
+				goto hungup;
+			} else if (pollfd[i].revents & POLLIN) {
+				if ((nread= read(clifd, buf, MAXLINE)) < 0) {
+					log_sys("read error on fd %d", pollfd[i].fd);
+				} else if (nread == 0) {
+hungup:
+					log_msg("closed: uid %d, fd %d", client[i].uid, pollfd[i].fd);
+					client_del(pollfd[i].fd);
+					if (i < numfd -1) {
+						pollfd[i].fd = pollfd[numfd - 1].fd;
+						pollfd[i].events = pollfd[numfd - 1].events;
+						pollfd[i].revents = pollfd[numfd - 1].revents;
+						i--;		//recheck this entry
+					}
+					numfd--;
+				} else {
+					handle_request_v2(buf, nread, clifd, client[i].uid);
+				}
+			}
+		}
+	}
 }
 
 static void handle_request_v2(char* buf, int nread, int clifd, uid_t uid)
 {
 	int newfd;
+	struct passwd *psd;
 
 	if (buf[nread-1] != 0) {
 		snprintf(errmsg, MAXLINE-1, "request from uid %d not null terminated: %*.*s\n",
@@ -2284,7 +2367,8 @@ static void handle_request_v2(char* buf, int nread, int clifd, uid_t uid)
 		return;
 	}
 
-	log_msg("request from uid %d: \"%s\" ", uid, buf);
+	psd = getpwuid(uid);
+	log_msg("request from uid %d %s: \"%s\" ", uid,psd?psd->pw_name:"", buf);
 	if (buf_args(buf, cli_args) < 0) {
 		send_err(clifd, -1, errmsg);
 		log_msg(errmsg);
