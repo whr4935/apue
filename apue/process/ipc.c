@@ -26,7 +26,13 @@ int TEST_ipc(int argc, char **argv)
 	//test_unix_domain_socket();
 	//test_unix_domain_socket_helper(argc, argv);
 
-	test_unix_socket_bind();
+	//test_unix_socket_bind();
+
+	//test_open_server_v1();
+	//test_open_server_client_v1();
+
+	//test_open_server_client_v2();
+	test_open_server_v2(argc, argv);
 
 	return 0;
 }
@@ -570,7 +576,7 @@ int test_posix_semaphore()
 		printf("child set value to %d\n", *addr);
 
 		ret = sem_getvalue(p_sem, &val);
-	//	printf("sem value is %d\n", val);
+		//	printf("sem value is %d\n", val);
 
 		sem_post(p_sem);
 
@@ -606,7 +612,7 @@ int test_posix_semaphore()
 		sleep(2);
 
 		ret = sem_getvalue(p_sem, &val);
-	//	printf("[sem] value is %d\n", val);
+		//	printf("[sem] value is %d\n", val);
 
 		ret = sem_wait(p_sem);
 		if (ret < 0)
@@ -957,7 +963,7 @@ int test_network_ipc()
 #endif
 
 #if 0
-	
+
 #if 0
 	ret = getaddrinfo(BAIDU_HOST, "ssh", NULL, &p_info);
 	if (ret != 0) {
@@ -1005,7 +1011,7 @@ int test_network_ipc()
 #define		MAXSLEEP 4
 int connect_retry(int domain, int type, int protocol, const struct sockaddr *addr, socklen_t alen)
 {
-	int numsec, fd;      
+	int numsec, fd;
 
 	for (numsec = 1; numsec <= MAXSLEEP; numsec <<= 1) {
 		if ((fd = socket(domain, type, protocol)) < 0)
@@ -1077,14 +1083,14 @@ static void serve(int sockfd)
 	printf("server bound address:\n");
 	print_sockaddr_in(&in_addr);
 
-	set_cloexec(sockfd);
+	my_set_cloexec(sockfd);
 	for (;;) {
 		if ((clfd = accept(sockfd, NULL, NULL)) < 0) {
 			server_log(LOG_ERR, "ruptimed: accept error: %s", strerror(errno));
 			exit(1);
 		}
-		set_cloexec(clfd);
-		
+		my_set_cloexec(clfd);
+
 		//get client information
 		if (getpeername(clfd, (struct sockaddr*)&in_addr, &slen) < 0) {
 			server_log(LOG_ERR, "getpeername");
@@ -1106,7 +1112,7 @@ static void serve(int sockfd)
 		if ((pid = fork()) < 0) {
 			server_log(LOG_ERR, "fork");
 		} else if (pid == 0) {
-			if (dup2(clfd, STDOUT_FILENO) != STDOUT_FILENO || 
+			if (dup2(clfd, STDOUT_FILENO) != STDOUT_FILENO ||
 				dup2(clfd, STDERR_FILENO) != STDERR_FILENO) {
 				server_log(LOG_ERR, "dup2");
 				exit(1);
@@ -1168,10 +1174,10 @@ int test_ruptime_server()
 		exit(1);
 	}
 	for (aip = alist; aip != NULL; aip = aip->ai_next) {
-	//	print_addrinfo(aip);
+		//	print_addrinfo(aip);
 
-// 		in_addr = (struct sockaddr_in*)aip->ai_addr;
-// 		in_addr->sin_addr.s_addr = INADDR_ANY;
+		// 		in_addr = (struct sockaddr_in*)aip->ai_addr;
+		// 		in_addr->sin_addr.s_addr = INADDR_ANY;
 
 		if ((sockfd = initserver(SOCK_STREAM, aip->ai_addr, aip->ai_addrlen, QLEN)) >= 0) {
 			serve(sockfd);
@@ -1218,7 +1224,7 @@ int test_ruptime_client()
 		err_quit("getaddrinfo: %s\n", aio_error(err));
 	}
 
-//	print_addrinfo(alist);
+	//	print_addrinfo(alist);
 
 	for (aip = alist; aip != NULL; aip = aip->ai_next) {
 		if ((sockfd = connect_retry(aip->ai_family, SOCK_STREAM, 0, aip->ai_addr, \
@@ -1245,7 +1251,7 @@ void serve_udp(int sockfd)
 	char abuf[MAXADDRLEN];
 	struct sockaddr *addr = (struct sockaddr *)abuf;
 
-	set_cloexec(sockfd);
+	my_set_cloexec(sockfd);
 	for (;;) {
 		alen = MAXADDRLEN;
 		if ((n = recvfrom(sockfd, buf, BUFLEN, 0, addr, &alen)) < 0) {
@@ -1321,7 +1327,7 @@ int test_uptime_server_udp()
 		server_log(LOG_ERR, "exit");
 		exit(0);
 	}
-	
+
 	server_log(LOG_ERR, "exit");
 	exit(1);
 
@@ -1345,7 +1351,7 @@ static void print_uptime_udp(int sockfd, struct addrinfo *aip)
 		exit(1);
 	}
 	alarm(TIMEOUT);
-	if((n = recvfrom(sockfd, buf, BUFLEN, 0, NULL, NULL)) < 0) {
+	if ((n = recvfrom(sockfd, buf, BUFLEN, 0, NULL, NULL)) < 0) {
 		if (errno != EINTR) {
 			alarm(0);
 		}
@@ -1455,7 +1461,7 @@ static void sig_term_handler(int signo)
 	}
 
 	for (i = 0; i < NQ; ++i) {
-		if ((qid[i] = msgget(KEY+i, 0)) < 0) 
+		if ((qid[i] = msgget(KEY + i, 0)) < 0)
 			continue;
 
 		if (msgctl(qid[i], IPC_RMID, NULL) < 0)
@@ -1486,7 +1492,7 @@ int test_unix_domain_socket()
 		if ((qid[i] = msgget(KEY + i, 0)) < 0) {
 			if ((qid[i] = msgget(KEY + i, IPC_CREAT | IPC_EXCL | 0666)) < 0) {
 				if (errno == EEXIST) {
-					if ((qid[i] = msgget(KEY+i, 0)) < 0) {
+					if ((qid[i] = msgget(KEY + i, 0)) < 0) {
 						err_sys("msgget");
 					} else {
 						err_sys("msgget");
@@ -1494,7 +1500,7 @@ int test_unix_domain_socket()
 				}
 			}
 		}
-		
+
 		printf("queue ID %d is %d\n", i, qid[i]);
 
 		if (socketpair(AF_UNIX, SOCK_DGRAM, 0, fd) < 0)
@@ -1611,7 +1617,7 @@ int my_serv_listen(const char *name)
 	strcpy(un.sun_path, name);
 	len = offsetof(struct sockaddr_un, sun_path) + strlen(name);
 
-	if(bind(fd, &un, len) < 0) {
+	if (bind(fd, &un, len) < 0) {
 		rval = -3;
 		goto errout;
 	}
@@ -1663,7 +1669,7 @@ int my_serv_accept(int listenfd, uid_t *uidptr)
 	}
 #endif
 
-	if ((statbuf.st_mode & (S_IRWXG|S_IRWXO)) ||
+	if ((statbuf.st_mode & (S_IRWXG | S_IRWXO)) ||
 		(statbuf.st_mode & S_IRWXU) != S_IRWXU) {
 		rval = -5;
 		goto errout;
@@ -1752,7 +1758,7 @@ int my_send_err(int fd, int errcode, const char* errmsg)
 	int n;
 
 	if ((n = strlen(errmsg)) > 0) {
-		if (writen(fd, errmsg, n) != n)
+		if (writen(fd, errmsg, n) != n)		//不能写'\0'，否则与协议冲突
 			return -1;
 	}
 
@@ -1761,7 +1767,7 @@ int my_send_err(int fd, int errcode, const char* errmsg)
 
 	if (my_send_fd(fd, errcode) < 0)
 		return -1;
-	
+
 	return 0;
 }
 
@@ -1864,8 +1870,12 @@ int my_recv_fd(int fd, ssize_t(*userfunc)(int, const void*, size_t))
 
 //////////////////////////////////////////////////////////////////////////
 #define		BUFFSIZE		8192
+#define		CL_OPEN			"open"
 
-int test_open_server_v1()
+static int csopen(char *, int);
+
+/////////////////////////////////
+int test_open_server_client_v1()
 {
 	int n, fd;
 	char buf[BUFFSIZE];
@@ -1875,8 +1885,10 @@ int test_open_server_v1()
 		if (line[strlen(line) - 1] == '\n')
 			line[strlen(line) - 1] = 0;
 
-		if ((fd = csopen(line, O_RDONLY)) < 0)
+		if ((fd = csopen(line, O_RDONLY)) < 0) {
+			printf("csopen failed!\n");
 			continue;
+		}
 
 		while ((n = read(fd, buf, BUFFSIZE)) > 0) {
 			if (write(STDOUT_FILENO, buf, n) != n)
@@ -1891,7 +1903,7 @@ int test_open_server_v1()
 	exit(0);
 }
 
-int csopen(char *name, int oflag)
+static int csopen(char *name, int oflag)
 {
 	pid_t	pid;
 	int		len;
@@ -1900,7 +1912,7 @@ int csopen(char *name, int oflag)
 	static int fd[2] = { -1, -1 };
 
 	if (fd[0] < 0) {
-		if (fd_pipe(fd) < 0) {
+		if (fd_pipe(fd) < 0) {		//fd_pipe: full_duplex pipe(a UNIX domain socket)
 			err_ret("fd_pipe");
 			return -1;
 		}
@@ -1917,7 +1929,7 @@ int csopen(char *name, int oflag)
 				dup2(fd[1], STDOUT_FILENO) != STDOUT_FILENO)
 				err_sys("dup2");
 
-			if (execl("./opend", "opend", (char*)0) < 0)
+			if (execl("./opend_v1", "opend_v1", (char*)0) < 0)
 				err_sys("execl");
 		}
 		close(fd[1]);
@@ -1926,8 +1938,368 @@ int csopen(char *name, int oflag)
 	iov[0].iov_base = CL_OPEN " ";
 	iov[0].iov_len = strlen(CL_OPEN) + 1;
 	iov[1].iov_base = name;
-	iov[1].iov_len = buf;
+	iov[1].iov_len = strlen(name);
 	iov[2].iov_base = buf;
 	iov[2].iov_len = strlen(buf) + 1;
+	len = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len;
+	if (writev(fd[0], &iov[0], 3) != len) {
+		err_ret("write");
+		return -1;
+	}
 
+	return my_recv_fd(fd[0], write);
+}
+
+/////////////////////////////////////
+static char errmsg[MAXLINE];
+static int oflag;
+static char *pathname;
+
+static int cli_args(int argc, char **argv);
+static void handle_request(char *buf, int nread, int fd);
+static int my_buf_args(char *buf, int(*optfunc)(int, char**));
+
+///////////////////////////
+int test_open_server_v1()
+{
+	int nread;
+	char buf[MAXLINE];
+
+	for (;;) {
+		if ((nread = read(STDIN_FILENO, buf, MAXLINE)) < 0)
+			err_sys("read");
+		else if (nread == 0)
+			break;
+		handle_request(buf, nread, STDOUT_FILENO);
+	}
+	exit(0);
+}
+
+static void handle_request(char *buf, int nread, int fd)
+{
+	int newfd;
+
+	if (buf[nread - 1] != 0) {
+		snprintf(errmsg, MAXLINE - 1, "request not null terminated: %*.*s\n",
+			nread, nread, buf);
+		my_send_err(fd, -1, errmsg);
+		return;
+	}
+
+	if (my_buf_args(buf, cli_args) < 0) {
+		my_send_err(fd, -1, errmsg);
+		return;
+	}
+
+	if ((newfd = open(pathname, oflag)) < 0) {
+		snprintf(errmsg, MAXLINE - 1, "can't open %s: %s\n", pathname, strerror(errno));
+		my_send_err(fd, -1, errmsg);
+		return;
+	}
+
+	if (my_send_fd(fd, newfd) < 0)
+		err_sys("send_fd");
+
+	close(newfd);
+}
+
+#define		MAXARGC		50
+#define		WHITE		" \t\n"
+
+static int my_buf_args(char *buf, int(*optfunc)(int, char**))
+{
+	char *ptr, *argv[MAXARGC];
+	int argc;
+
+	if (strtok(buf, WHITE) == NULL)
+		return -1;
+
+	argv[argc = 0] = buf;
+	while ((ptr = strtok(NULL, WHITE)) != NULL) {
+		if (++argc >= MAXARGC - 1)
+			return -1;
+		argv[argc] = ptr;
+	}
+	argv[++argc] = NULL;
+
+	return(*optfunc)(argc, argv);
+}
+
+static int cli_args(int argc, char **argv)
+{
+	if (argc != 3 || strcmp(argv[0], CL_OPEN) != 0) {
+		strcpy(errmsg, "Usage: <pathname> <oflag>\n");
+		return -1;
+	}
+
+	pathname = argv[1];
+	oflag = atoi(argv[2]);
+
+	return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////
+//open Server version 2
+
+#define		CS_OPEN		"/tmp/opend.socket"
+
+static int csopen_v2(char *name, int oflag);
+
+///////////////////////////////////////////
+int test_open_server_client_v2()
+{
+	int n, fd;
+	char buf[BUFFSIZE];
+	char line[MAXLINE];
+
+	while (fgets(line, MAXLINE, stdin) != NULL) {
+		if (line[strlen(line) - 1] == '\n')
+			line[strlen(line) - 1] = 0;
+
+		if (strlen(line) == 0)
+			continue;
+
+		if ((fd = csopen_v2(line, O_RDONLY)) < 0) {
+			printf("csopen failed!\n");
+			continue;
+		}
+
+		while ((n = read(fd, buf, BUFFSIZE)) > 0) {
+			if (write(STDOUT_FILENO, buf, n) != n)
+				err_sys("write");
+		}
+
+		if (n < 0)
+			err_sys("read");
+		close(fd);
+	}
+
+	exit(0);
+}
+
+static int csopen_v2(char *name, int oflag)
+{
+	int len;
+	char buf[12];
+	struct iovec iov[3];
+	static int csfd = -1;
+
+	if (csfd < 0) {
+		if ((csfd = my_cli_conn(CS_OPEN)) < 0) {
+			err_ret("cli_conn");
+			return -1;
+		}
+	}
+
+	sprintf(buf, " %d", oflag);
+	iov[0].iov_base = CL_OPEN " ";
+	iov[0].iov_len = strlen(CL_OPEN) + 1;
+	iov[1].iov_base = name;
+	iov[1].iov_len = strlen(name);
+	iov[2].iov_base = buf;
+	iov[2].iov_len = strlen(buf) + 1;
+	len = iov[0].iov_len + iov[1].iov_len + iov[2].iov_len;
+	if (writev(csfd, &iov[0], 3) != len) {
+		err_ret("writev");
+		return -1;
+	}
+
+	return recv_fd(csfd, write);
+}
+
+//////////////////////////////
+typedef struct {
+	int fd;
+	uid_t uid;
+}Client;
+
+#define		NALLOC		10
+
+static int debug;
+int log_to_stderr;
+
+Client *client = NULL;
+static int client_size;
+
+static void client_alloc();
+static int client_add(int fd, uid_t uid);
+static void client_del(int fd);
+
+static void loop_select(void);
+static void loop_poll(void);
+static void handle_request_v2(char* buf, int nread, int clifd, uid_t uid);
+
+/////////////////////////////
+int test_open_server_v2(int argc, char *argv[])
+{
+	int c;
+	char *cmd_args[3];
+
+	cmd_args[0] = argv[0];
+	cmd_args[1] = "-d";
+	cmd_args[2] = 0;
+
+	argc = 2;
+	argv = cmd_args;
+
+	log_open("open.serv", LOG_PID, LOG_USER);
+
+	opterr = 0;
+	while ((c = getopt(argc, argv, "d")) != EOF) {
+		switch (c) {
+		case 'd':
+			debug = log_to_stderr = 1;
+			break;
+
+		case '?':
+			err_quit("unrecongnized option: -%c", optopt);
+		}
+	}
+
+	if (debug == 0)
+		my_daemonize("opend_v2");
+
+	loop_select();
+	//	loop_poll();
+
+	return 0;
+}
+
+static void client_alloc()
+{
+	int i;
+
+	if (client == NULL)
+		client = malloc(NALLOC * sizeof(Client));
+	else
+		client = realloc(client, (client_size+NALLOC) * sizeof(Client));
+	
+	if (client == NULL)
+		err_sys("can't alloc for client array");
+
+	for (i = client_size; i < client_size + NALLOC; ++i)
+		client[i].fd = -1;
+
+	client_size += NALLOC;
+}
+
+static int client_add(int fd, uid_t uid)
+{
+	int i;
+
+	if (client == NULL)
+		client_alloc();
+
+again:
+	for (i = 0; i < client_size; ++i) {
+		if (client[i].fd == -1) {
+			client[i].fd = fd;
+			client[i].uid = uid;
+			return i;
+		}
+	}
+
+	client_alloc();
+	goto again;
+}
+
+static void client_del(int fd)
+{
+	int i;
+
+	for (i = 0; i < client_size; ++i) {
+		if (client[i].fd == fd) {
+			client[i].fd = -1;
+			return;
+		}
+	}
+	log_quit("can't find client entry for fd %d", fd);
+}
+
+static void loop_select(void)
+{
+	int i, n, maxfd, maxi, listenfd, clifd, nread;
+	char buf[MAXLINE];
+	uid_t uid;
+	fd_set rset, allset;
+
+	FD_ZERO(&allset);
+	if ((listenfd = my_serv_listen(CS_OPEN)) < 0)
+		log_sys("serv_listen");
+	FD_SET(listenfd, &allset);
+	maxfd = listenfd;
+	maxi = -1;
+
+	for (;;) {
+		rset = allset;
+		if ((n = select(maxfd+1, &rset, NULL, NULL, NULL)) < 0)
+			log_sys("select");
+
+		if (FD_ISSET(listenfd, &rset)) {
+			if ((clifd = my_serv_accept(listenfd, &uid)) < 0)
+				log_sys("serv_accept error: %d", clifd);
+			i = client_add(clifd, uid);
+			FD_SET(clifd, &allset);
+			if (clifd > maxfd)
+				maxfd = clifd;
+			if (i > maxi)
+				maxi = i;
+			log_msg("new connection: uid %d, fd %d", uid, clifd);
+			continue;
+		}
+
+		for (i = 0; i <= maxi; ++i) {
+			if ((clifd = client[i].fd) < 0)
+				continue;
+
+			if (FD_ISSET(clifd, &rset)) {
+				if ((nread = read(clifd, buf, MAXLINE)) < 0) {
+					log_sys("read error on fd: %d", clifd);
+				} else if (nread == 0) {
+					log_msg("closed: uid %d, fd %d", uid, clifd);
+					client_del(clifd);
+					FD_CLR(clifd, &allset);
+				} else {
+					handle_request_v2(buf, nread, clifd, client[i].uid);
+				}
+
+			}
+		}
+	}
+}
+
+static void loop_poll(void)
+{
+
+}
+
+static void handle_request_v2(char* buf, int nread, int clifd, uid_t uid)
+{
+	int newfd;
+
+	if (buf[nread-1] != 0) {
+		snprintf(errmsg, MAXLINE-1, "request from uid %d not null terminated: %*.*s\n",
+			uid, nread, nread, buf);
+		send_err(clifd, -1, errmsg);
+		return;
+	}
+
+	log_msg("request from uid %d: \"%s\" ", uid, buf);
+	if (buf_args(buf, cli_args) < 0) {
+		send_err(clifd, -1, errmsg);
+		log_msg(errmsg);
+		return;
+	}
+
+	if ((newfd = open(pathname, oflag)) < 0) {
+		snprintf(errmsg, MAXLINE-1, "can't open %s: %s\n", pathname, strerror(errno));
+		send_err(clifd, -1, errmsg);
+		log_msg(errmsg);
+		return;
+	}
+
+	if (my_send_fd(clifd, newfd) < 0)
+		log_sys("send_fd");
+	log_msg("sent fd %d over fd %d for %s", newfd, clifd, pathname);
+	close(newfd);
 }

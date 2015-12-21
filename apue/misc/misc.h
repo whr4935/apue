@@ -2,6 +2,8 @@
 #define _MISC_H
 
 int TEST_misc();
+
 int misc();
+int test_strtok();
 
 #endif

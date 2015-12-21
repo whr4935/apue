@@ -20,9 +20,12 @@ int test_unix_domain_socket();
 int test_unix_domain_socket_helper(int argc, char **argv);
 int test_unix_socket_bind();
 
-//////////////////////////////////////////////////////////////////////////
-#define		CL_OPEN		"open"
+int test_open_server_client_v1();
+int test_open_server_v1();
+int test_open_server_client_v2();
+int test_open_server_v2(int argc, char *argv[]);
 
-int csopen(char *, int);
+//////////////////////////////////////////////////////////////////////////
+
 
 #endif // !_TEST_IPC_H

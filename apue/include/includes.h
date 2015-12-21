@@ -46,6 +46,17 @@ err_msg: 不打印errno，返回
 #define msleep(x) usleep(x*1000)//x should be less than 1000, or else use sleep
 
 //////////////////////////////////////////////////////////////////////////
+//common interfaces
+int my_set_cloexec(int fd);
+int my_daemonize(char *cmd);
+int my_serv_listen(const char *name);
+int my_serv_accept(int listenfd, uid_t *uidptr);
+int my_cli_conn(const char *name);
+int my_send_fd(int fd, int fd_to_send);
+int my_send_err(int fd, int status, const char* errmsg);
+int my_recv_fd(int fd, ssize_t(*userfunc)(int, const void*, size_t));
+
+//////////////////////////////////////////////////////////////////////////
 #ifdef DEBUG
 #define log_info(format,...)  \
 	do{ \
@@ -112,16 +123,6 @@ err_msg: 不打印errno，返回
 #define		TERMINAL_COLOR_BOLDWHITE	"\033[1m\033[37m" /* Bold White */
 
 //////////////////////////////////////////////////////////////////////////
-//common interfaces
-
-int set_cloexec(int fd);
-int my_daemonize(char *cmd);
-int my_serv_listen(const char *name);
-int my_serv_accept(int listenfd, uid_t *uidptr);
-int my_cli_conn(const char *name);
-int my_send_fd(int fd, int fd_to_send);
-int my_send_err(int fd, int status, const char* errmsg);
-int my_recv_fd(int fd, ssize_t(*userfunc)(int, const void*, size_t));
 
 
 #endif

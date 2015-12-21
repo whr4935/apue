@@ -436,7 +436,7 @@ int test_time()
 	return 0;
 }
 
-int set_cloexec(int fd)
+int my_set_cloexec(int fd)
 {
 	int ret;
 
