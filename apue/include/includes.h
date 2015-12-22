@@ -13,6 +13,7 @@
 #include <poll.h>
 #include <semaphore.h>
 #include <netdb.h>
+#include <termios.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>

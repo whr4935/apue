@@ -6,7 +6,8 @@ int TEST_misc(int argc, char **argv)
 {
 
 	//misc();
-	test_strtok();
+	//test_strtok();
+	test_exit();
 
 	return 0;
 }
@@ -54,6 +55,22 @@ int test_strtok()
 	while ((p = strtok_r(NULL, delim, &save_ptr)) != NULL)
 		printf("%s\n", p);
 #endif
+
+	return 0;
+}
+
+int test_exit()
+{
+	int ret;
+	int prog_exit_value;
+	int v;
+
+	ret = system("./exit_with_1");
+	v = WIFEXITED(ret);
+	if (WIFEXITED(ret)) {
+		prog_exit_value = WEXITSTATUS(ret);
+	}
+	printf("ret = %d\n", ret);
 
 	return 0;
 }

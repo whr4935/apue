@@ -7,14 +7,16 @@
 #include "process/process.h"
 #include "process/thread.h"
 #include "process/ipc.h"
+#include "process/term.h"
 
 
 //////////////////////////////////////////////////////////////////////////
 #define		TEST_FILE_DIR	0
-#define		TEST_MISC		0
+#define		TEST_MISC		1
 #define		TEST_PROCESS	0
 #define		TEST_THREAD		0
-#define		TEST_IPC		1
+#define		TEST_IPC		0
+#define		TEST_TERM		0
 
 
 int (*test_func_array[])(int argc, char **argv) = {
@@ -36,6 +38,10 @@ int (*test_func_array[])(int argc, char **argv) = {
 
 #if	TEST_IPC
 	TEST_ipc,
+#endif
+
+#if TEST_TERM
+	TEST_term,
 #endif
 
 	NULL,

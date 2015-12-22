@@ -2339,7 +2339,7 @@ static void loop_poll(void)
 					log_sys("read error on fd %d", pollfd[i].fd);
 				} else if (nread == 0) {
 hungup:
-					log_msg("closed: uid %d, fd %d", client[i].uid, pollfd[i].fd);
+					log_msg("closed: uid %d, fd %d", client[i].uid, pollfd[i].fd);		//client 和 i的对应关系有问题
 					client_del(pollfd[i].fd);
 					close(pollfd[i].fd);
 					if (i < numfd -1) {
