@@ -5,9 +5,9 @@
 int TEST_misc(int argc, char **argv)
 {
 
-	//misc();
+	misc();
 	//test_strtok();
-	test_exit();
+	//test_exit();
 
 	return 0;
 }
@@ -15,6 +15,7 @@ int TEST_misc(int argc, char **argv)
 int misc()
 {
 	int ret;
+	int fd;
 
 	char version[100];
 
@@ -27,6 +28,7 @@ int misc()
 	ret = pathconf("/", _PC_PATH_MAX);  //4096
 
 	ret = pathconf("/", _POSIX_NO_TRUNC);
+
 
 	return 0;
 }

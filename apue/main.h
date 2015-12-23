@@ -13,10 +13,10 @@
 //////////////////////////////////////////////////////////////////////////
 #define		TEST_FILE_DIR	0
 #define		TEST_MISC		0
-#define		TEST_PROCESS	0
+#define		TEST_PROCESS	1
 #define		TEST_THREAD		0
 #define		TEST_IPC		0
-#define		TEST_TERM		1
+#define		TEST_TERM		0
 
 
 int (*test_func_array[])(int argc, char **argv) = {

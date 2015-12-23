@@ -8,6 +8,7 @@ int TEST_process(int argc, char **argv)
 	//test_rlimit();
 	//test_fork();
 	//test_vfork();
+	test_control_priority();
 	//test_abort_core();
 	//test_segement_fault();
 	//test_signal();
@@ -16,7 +17,7 @@ int TEST_process(int argc, char **argv)
 	//test_alarm();
 	//test_sigprocmask();
 	//test_process_group();
-	test_daemon();
+	//test_daemon();
 	//test_unblock_write();
 	//test_record_lock();
 	//test_selct();
@@ -181,6 +182,132 @@ int test_vfork()
 	printf("pid = %d, globval = %d, var = %d\n", (long)getpid(), globval, var);
 
 	exit(0);
+	return 0;
+}
+
+static struct timeval end;
+static unsigned long long count;
+
+static void checktime(char *s)
+{
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+	if (tv.tv_sec >= end.tv_sec && tv.tv_usec >= end.tv_usec) {
+		printf("%s count = %lld\n", s, count);
+		exit(0);
+	}
+}
+
+int test_control_priority()
+{
+	int nzero = 0;
+	int pri = 0;
+	int ret;
+	int pri_min, pri_max;
+	int policy;
+	pthread_attr_t attr;
+	pid_t pid;
+	
+	
+
+#if defined(NZERO)
+	nzero = NZERO;
+#elif defined(_SC_NZERO)
+	nzero = sysconf(_SC_NZERO);
+#else
+#error NZERO undefined
+#endif
+
+//	printf("current nice value: %d\n", nice(0) + nzero);
+
+	pri = getpriority(PRIO_PROCESS, 0);
+//	printf("current priority: %d\n", pri);
+
+// 	ret = setpriority(PRIO_PROCESS, 0, -1);		//优先级值越低，占有越多的CPU时间
+// 	if (ret < 0)
+// 		err_sys("setpriority");
+
+	pri = getpriority(PRIO_PROCESS, 0);
+//	printf("current priority: %d\n", pri);
+
+	ret = pthread_attr_init(&attr);
+	assert(ret == 0);
+	ret = pthread_attr_getschedpolicy(&attr, &policy);
+	assert(ret == 0);
+
+	switch (policy) {
+	case SCHED_FIFO:
+		printf("policy SCHED_FIFO!\n");
+		break;
+
+	case SCHED_RR:
+		printf("policy SCHED_RR!\n");
+		break;
+
+	case SCHED_OTHER:
+		printf("policy SCHED_OTHER!\n");
+		break;
+
+	default:
+		printf("policy unknown!\n");
+		break;
+	}
+	
+	pri_max = sched_get_priority_max(SCHED_OTHER);		//pri_max和pri_min都是0，分时调度由nice值影响优先级
+	pri_min = sched_get_priority_min(SCHED_OTHER);
+
+	pri_max = sched_get_priority_max(SCHED_RR);
+	pri_min = sched_get_priority_min(SCHED_RR);
+
+	pri_max = sched_get_priority_max(SCHED_FIFO);
+	pri_min = sched_get_priority_min(SCHED_FIFO);
+
+
+	gettimeofday(&end, NULL);
+	end.tv_sec += 5;
+	pid = fork();
+	if (pid < 0)
+		err_sys("fork");
+	else if (pid == 0) {
+// 		ret = setpriority(PRIO_PROCESS, 0, 19);
+// 		if (ret < 0)
+// 			err_sys("setpriority");
+
+		errno = 0;
+		if ((pri = nice(19)) == -1 && errno != 0)
+			err_sys("nice");
+
+		errno = 0;
+		pri = getpriority(PRIO_PROCESS, 0);
+		if (pri == -1 && errno != 0) {
+			err_sys("getpriority");
+		}
+		printf("child priority: %d\n", pri);
+
+		for (;;) {
+			++count;
+			if (count == 0)
+				err_quit("child count wrap");
+			checktime("child ");
+		}
+	} else {
+		errno = 0;
+		pri = getpriority(PRIO_PROCESS, 0);
+		if (pri == -1 && errno != 0) {
+			err_sys("getpriority");
+		}
+		printf("parent priority: %d\n", pri);
+
+		for (;;) {
+			++count;
+			if (count == 0)
+				err_quit("parent count wrap");
+			checktime("parent");
+		}
+	}
+
+
 	return 0;
 }
 

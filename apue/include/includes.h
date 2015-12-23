@@ -3,6 +3,7 @@
 
 #include <apue.h>
 #include <errno.h>
+#include <assert.h>
 #include <signal.h>
 #include <time.h>
 #include <fcntl.h>
@@ -14,6 +15,7 @@
 #include <semaphore.h>
 #include <netdb.h>
 #include <termios.h>
+#include <pthread.h>
 
 #include <sys/stat.h>
 #include <sys/mman.h>

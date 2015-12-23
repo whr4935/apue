@@ -8,6 +8,7 @@ int test_setjump();
 int test_rlimit();
 int test_fork();
 int test_vfork();
+int test_control_priority();
 int test_abort_core();
 int test_segement_fault();
 int test_signal();
