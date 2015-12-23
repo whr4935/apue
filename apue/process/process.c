@@ -199,6 +199,54 @@ static void checktime(char *s)
 	}
 }
 
+//测试线程是否继承创建者的调度规则和优先级
+static void* priority_test_thread(void* arg)
+{
+	cpu_set_t cpu_set;
+	int ret;
+	int policy;
+	struct sched_param s_param;
+	int i;
+	int cpu_total = get_nprocs();
+
+	pthread_detach(pthread_self());
+
+	policy = sched_getscheduler(0);
+	printf("thread ");
+	switch (policy) {
+	case SCHED_FIFO:
+		printf("policy SCHED_FIFO!\n");
+		break;
+
+	case SCHED_RR:
+		printf("policy SCHED_RR!\n");
+		break;
+
+	case SCHED_OTHER:
+		printf("policy SCHED_OTHER!\n");
+		break;
+
+	default:
+		printf("policy unknown!\n");
+		break;
+	}
+
+	ret = sched_getparam(0, &s_param);
+	if (ret < 0)
+		err_sys("sched_getparam");
+	printf("thread priority: %d\n", s_param.__sched_priority);
+	
+	CPU_ZERO(&cpu_set);
+ 	ret = sched_getaffinity(0, CPU_SETSIZE, &cpu_set);
+	if (ret < 0)
+		err_sys("ret");
+	for (i = 0; i < cpu_total; ++i) {
+		if (CPU_ISSET(i, &cpu_set)) {
+			printf("thread affinity cpu %d\n", i);
+		}
+	}
+}
+
 int test_control_priority()
 {
 	int nzero = 0;
@@ -208,9 +256,33 @@ int test_control_priority()
 	int policy;
 	pthread_attr_t attr;
 	pid_t pid;
-	
-	
+	struct sched_param s_param;
+	cpu_set_t cpu_set;
+	int cpu_total;
+	int i;
+	pthread_t thr;
 
+#if 1
+	cpu_total = get_nprocs();
+	printf("total cpu number: %d\n", cpu_total);
+
+	CPU_ZERO(&cpu_set);
+	CPU_SET(0, &cpu_set);
+//	CPU_SET(1, &cpu_set);
+	ret = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_set);
+	if (ret < 0)
+		err_sys("sched_setaffinity");
+
+	CPU_ZERO(&cpu_set);
+	ret = sched_getaffinity(0, CPU_SETSIZE, &cpu_set);
+	for (i = 0; i < cpu_total; ++i) {
+		if (CPU_ISSET(i, &cpu_set)) {
+			printf("current process affinity cpu %d\n", i);
+		}
+	}
+//	printf("sizeof(cpu_set_t) = %d\n", sizeof(cpu_set_t));
+#endif
+	
 #if defined(NZERO)
 	nzero = NZERO;
 #elif defined(_SC_NZERO)
@@ -231,10 +303,34 @@ int test_control_priority()
 	pri = getpriority(PRIO_PROCESS, 0);
 //	printf("current priority: %d\n", pri);
 
-	ret = pthread_attr_init(&attr);
-	assert(ret == 0);
-	ret = pthread_attr_getschedpolicy(&attr, &policy);
-	assert(ret == 0);
+// 	ret = pthread_attr_init(&attr);
+// 	assert(ret == 0);
+// 	ret = pthread_attr_getschedpolicy(&attr, &policy);
+// 	assert(ret == 0);
+
+	s_param.__sched_priority = sched_get_priority_max(SCHED_RR) - 10;
+
+	ret = sched_setscheduler(0, SCHED_RR, &s_param);
+	if (ret < 0)
+		err_sys("sched_setscheduler");
+
+	ret = pthread_create(&thr, NULL, priority_test_thread, NULL);
+	if (ret != 0)
+		err_exit(ret, "pthread_create");
+
+	for (;;) {
+		sched_yield();
+		sleep(6);
+		exit(0);
+	}
+
+	policy = sched_getscheduler(0);
+	if (policy < 0)
+		err_sys("policy");
+
+	ret = sched_getparam(0, &s_param);
+	if (ret < 0)
+		err_sys("sched_getparam");
 
 	switch (policy) {
 	case SCHED_FIFO:
@@ -270,13 +366,15 @@ int test_control_priority()
 	if (pid < 0)
 		err_sys("fork");
 	else if (pid == 0) {
-// 		ret = setpriority(PRIO_PROCESS, 0, 19);
-// 		if (ret < 0)
-// 			err_sys("setpriority");
-
+#if 1
+		ret = setpriority(PRIO_PROCESS, 0, 19);
+		if (ret < 0)
+			err_sys("setpriority");
+#else
 		errno = 0;
-		if ((pri = nice(19)) == -1 && errno != 0)
+		if ((pri = nice(19)) == -1 && errno != 0)		//nice函数被setpriority取代
 			err_sys("nice");
+#endif
 
 		errno = 0;
 		pri = getpriority(PRIO_PROCESS, 0);

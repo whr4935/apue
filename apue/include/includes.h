@@ -26,6 +26,7 @@
 #include <sys/shm.h>
 #include <sys/socket.h>
 #include <sys/un.h>
+#include <sys/sysinfo.h>
 
 #include <arpa/inet.h>
 
