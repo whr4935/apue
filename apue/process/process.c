@@ -186,18 +186,26 @@ int test_vfork()
 }
 
 static struct timeval end;
-static unsigned long long count;
+//static unsigned long long count;
 
-static void checktime(char *s)
+static int checktime(char *s, unsigned long long count)
 {
 	struct timeval tv;
 
 	gettimeofday(&tv, NULL);
 	if (tv.tv_sec >= end.tv_sec && tv.tv_usec >= end.tv_usec) {
 		printf("%s count = %lld\n", s, count);
-		exit(0);
+		return -1;
 	}
+
+	return 0;
 }
+
+static pthread_barrier_t barrier;
+
+static pthread_mutex_t priority_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t priority_cond = PTHREAD_COND_INITIALIZER;
+static int notify_signal = 0;
 
 //测试线程是否继承创建者的调度规则和优先级
 static void* priority_test_thread(void* arg)
@@ -208,10 +216,24 @@ static void* priority_test_thread(void* arg)
 	struct sched_param s_param;
 	int i;
 	int cpu_total = get_nprocs();
+	int tid;
+	unsigned long long count =0;
+	struct timespec t_spec;
+	int id;
+	pthread_attr_t attr;
 
-	pthread_detach(pthread_self());
+	id = 0;
+//	id = getpid();
+	id = gettid();
+//	id = pthread_self();
 
-	policy = sched_getscheduler(0);
+//	printf("tid: %d, pthread_self id: %d\n", gettid(), pthread_self());
+
+//	pthread_detach(pthread_self());
+
+	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+
+	policy = sched_getscheduler(id);
 	printf("thread ");
 	switch (policy) {
 	case SCHED_FIFO:
@@ -231,20 +253,52 @@ static void* priority_test_thread(void* arg)
 		break;
 	}
 
-	ret = sched_getparam(0, &s_param);
+	ret = sched_getparam(id, &s_param);
 	if (ret < 0)
 		err_sys("sched_getparam");
 	printf("thread priority: %d\n", s_param.__sched_priority);
 	
-	CPU_ZERO(&cpu_set);
- 	ret = sched_getaffinity(0, CPU_SETSIZE, &cpu_set);
-	if (ret < 0)
-		err_sys("ret");
-	for (i = 0; i < cpu_total; ++i) {
-		if (CPU_ISSET(i, &cpu_set)) {
-			printf("thread affinity cpu %d\n", i);
-		}
+// 
+// 
+// 	tid = gettid();
+//  	CPU_ZERO(&cpu_set);
+//   	ret = sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set);
+// 	if (ret < 0)
+// 		err_sys("ret");
+// 	for (i = 0; i < cpu_total; ++i) {
+// 		if (CPU_ISSET(i, &cpu_set)) {
+// 			printf("thread affinity cpu %d\n", i);
+// 		}
+// 	}
+	
+// 	ret = pthread_barrier_wait(&barrier);
+// 	if (ret != 0 && ret != PTHREAD_BARRIER_SERIAL_THREAD) {
+// 		err_exit(ret, "pthread_barrier_wait");
+// 	}
+
+//	pthread_exit(0);
+
+// 	t_spec.tv_sec = 2;
+// 	t_spec.tv_nsec = 0;
+// 	ret = pthread_mutex_lock(&priority_mutex);
+// 	if (ret != 0)
+// 		err_exit(ret, "pthread_mutex_lock");
+// 	while (notify_signal == 0) {
+// 		//pthread_cond_timedwait(&priority_cond, &priority_mutex, &t_spec);
+// 		pthread_cond_wait(&priority_cond, &priority_mutex);
+// 	}
+// 	pthread_mutex_unlock(&priority_mutex);
+
+	printf("thread begin test...\n");
+	for (;;) {
+		++count;
+		if (count == 0)
+			err_quit("thread count wrap");
+		if (checktime("thread", count) < 0)
+			break;
 	}
+
+	printf("thread exit...\n");
 }
 
 int test_control_priority()
@@ -261,8 +315,10 @@ int test_control_priority()
 	int cpu_total;
 	int i;
 	pthread_t thr;
+	unsigned long long count = 0;
 
-#if 1
+#if 0
+	//设置CPU亲和性
 	cpu_total = get_nprocs();
 	printf("total cpu number: %d\n", cpu_total);
 
@@ -274,7 +330,7 @@ int test_control_priority()
 		err_sys("sched_setaffinity");
 
 	CPU_ZERO(&cpu_set);
-	ret = sched_getaffinity(0, CPU_SETSIZE, &cpu_set);
+	ret = sched_getaffinity(0, sizeof(cpu_set_t), &cpu_set);
 	for (i = 0; i < cpu_total; ++i) {
 		if (CPU_ISSET(i, &cpu_set)) {
 			printf("current process affinity cpu %d\n", i);
@@ -291,47 +347,29 @@ int test_control_priority()
 #error NZERO undefined
 #endif
 
-//	printf("current nice value: %d\n", nice(0) + nzero);
-
-	pri = getpriority(PRIO_PROCESS, 0);
+	//设置非实时进程优先级
+//	pri = getpriority(PRIO_PROCESS, 0);
 //	printf("current priority: %d\n", pri);
 
 // 	ret = setpriority(PRIO_PROCESS, 0, -1);		//优先级值越低，占有越多的CPU时间
 // 	if (ret < 0)
 // 		err_sys("setpriority");
 
-	pri = getpriority(PRIO_PROCESS, 0);
+//	pri = getpriority(PRIO_PROCESS, 0);
 //	printf("current priority: %d\n", pri);
 
-// 	ret = pthread_attr_init(&attr);
-// 	assert(ret == 0);
-// 	ret = pthread_attr_getschedpolicy(&attr, &policy);
-// 	assert(ret == 0);
-
+	////////////////////////////
+	//设置为实时进程
 	s_param.__sched_priority = sched_get_priority_max(SCHED_RR) - 10;
-
 	ret = sched_setscheduler(0, SCHED_RR, &s_param);
 	if (ret < 0)
 		err_sys("sched_setscheduler");
-
-	ret = pthread_create(&thr, NULL, priority_test_thread, NULL);
-	if (ret != 0)
-		err_exit(ret, "pthread_create");
-
-	for (;;) {
-		sched_yield();
-		sleep(6);
-		exit(0);
-	}
 
 	policy = sched_getscheduler(0);
 	if (policy < 0)
 		err_sys("policy");
 
-	ret = sched_getparam(0, &s_param);
-	if (ret < 0)
-		err_sys("sched_getparam");
-
+	printf("main thread ");
 	switch (policy) {
 	case SCHED_FIFO:
 		printf("policy SCHED_FIFO!\n");
@@ -349,7 +387,67 @@ int test_control_priority()
 		printf("policy unknown!\n");
 		break;
 	}
-	
+
+	ret = sched_getparam(0, &s_param);
+	if (ret < 0)
+		err_sys("sched_getparam");
+	printf("main thread priority: %d\n", s_param.__sched_priority);
+
+#if 1
+	///////////////////////////////////
+	//创建测试线程
+	pthread_mutex_init(&priority_mutex, NULL);
+	pthread_cond_init(&priority_cond, NULL);
+
+	ret = pthread_barrier_init(&barrier, NULL, 2);
+	if (ret != 0)
+		err_exit(ret, "pthread_barrier_init");
+
+	ret = pthread_attr_init(&attr);
+	if (ret != 0)
+		err_exit(ret, "pthread_attr_init");
+	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+	pthread_attr_setschedpolicy(&attr, SCHED_RR);
+	s_param.__sched_priority = sched_get_priority_max(SCHED_RR)-11;
+	pthread_attr_setschedparam(&attr, &s_param);
+
+	gettimeofday(&end, NULL);
+	end.tv_sec += 5;
+
+	ret = pthread_create(&thr, &attr, priority_test_thread, NULL);
+	if (ret != 0)
+		err_exit(ret, "pthread_create");
+
+	pthread_attr_destroy(&attr);
+
+
+//	ret= pthread_barrier_wait(&barrier);
+//	printf("pthread_barrier_wait return %d\n", ret);
+//	printf("main thread continue...\n");
+
+// 	pthread_mutex_lock(&priority_mutex);
+// 	notify_signal = 1;
+// 	pthread_mutex_unlock(&priority_mutex);
+// 	ret = pthread_cond_signal(&priority_cond);
+// 	if (ret != 0)
+// 		err_exit(ret, "pthread_cond_signal");
+
+	printf("main begin test...\n");
+	for (;;) {
+		++count;
+		if (count == 0)
+			err_quit("main count wrap");
+		if (checktime("main  ", count) < 0)
+			break;
+	}
+
+	printf("main wait for exit...\n");
+	pthread_join(thr, NULL);
+
+	exit(0);
+#endif
+
+	////////////////////////////////////
 	pri_max = sched_get_priority_max(SCHED_OTHER);		//pri_max和pri_min都是0，分时调度由nice值影响优先级
 	pri_min = sched_get_priority_min(SCHED_OTHER);
 
@@ -361,47 +459,60 @@ int test_control_priority()
 
 
 	gettimeofday(&end, NULL);
-	end.tv_sec += 5;
+	end.tv_sec += 10;
 	pid = fork();
 	if (pid < 0)
 		err_sys("fork");
 	else if (pid == 0) {
-#if 1
-		ret = setpriority(PRIO_PROCESS, 0, 19);
+		policy = sched_getscheduler(0);
+		printf("child process policy = %d\n", policy);
+		ret = sched_getparam(0, &s_param);
+		printf("child prirotiy: %d\n", s_param.__sched_priority);
+		s_param.__sched_priority--;
+		ret = sched_setparam(0, &s_param);
 		if (ret < 0)
-			err_sys("setpriority");
-#else
-		errno = 0;
-		if ((pri = nice(19)) == -1 && errno != 0)		//nice函数被setpriority取代
-			err_sys("nice");
-#endif
+			err_sys("sched_setparam");
+		ret = sched_getparam(0, &s_param);
+		printf("reset child prirotiy: %d\n", s_param.__sched_priority);
 
-		errno = 0;
-		pri = getpriority(PRIO_PROCESS, 0);
-		if (pri == -1 && errno != 0) {
-			err_sys("getpriority");
-		}
-		printf("child priority: %d\n", pri);
+
+
+// #if 1
+// 		ret = setpriority(PRIO_PROCESS, 0, 19);
+// 		if (ret < 0)
+// 			err_sys("setpriority");
+// #else
+// 		errno = 0;
+// 		if ((pri = nice(19)) == -1 && errno != 0)		//nice函数被setpriority取代
+// 			err_sys("nice");
+// #endif
+// 
+// 		errno = 0;
+// 		pri = getpriority(PRIO_PROCESS, 0);
+// 		if (pri == -1 && errno != 0) {
+// 			err_sys("getpriority");
+// 		}
+// 		printf("child priority: %d\n", pri);
 
 		for (;;) {
 			++count;
 			if (count == 0)
 				err_quit("child count wrap");
-			checktime("child ");
+			checktime("child ", count);
 		}
 	} else {
-		errno = 0;
-		pri = getpriority(PRIO_PROCESS, 0);
-		if (pri == -1 && errno != 0) {
-			err_sys("getpriority");
-		}
-		printf("parent priority: %d\n", pri);
+// 		errno = 0;
+// 		pri = getpriority(PRIO_PROCESS, 0);
+// 		if (pri == -1 && errno != 0) {
+// 			err_sys("getpriority");
+// 		}
+// 		printf("parent priority: %d\n", pri);
 
 		for (;;) {
 			++count;
 			if (count == 0)
 				err_quit("parent count wrap");
-			checktime("parent");
+			checktime("parent", count);
 		}
 	}
 

@@ -5,9 +5,10 @@
 int TEST_misc(int argc, char **argv)
 {
 
-	misc();
+	//misc();
 	//test_strtok();
 	//test_exit();
+	test_getopt(argc, argv);
 
 	return 0;
 }
@@ -73,6 +74,31 @@ int test_exit()
 		prog_exit_value = WEXITSTATUS(ret);
 	}
 	printf("ret = %d\n", ret);
+
+	return 0;
+}
+
+int test_getopt(int argc,char **argv)
+{
+	int i;
+	int c;
+	char *tok = "a:bcd:e:";
+
+	while ((c = getopt(argc, argv, tok)) != -1) {
+		switch (c) {
+		case 'a':
+			printf("option: %c, arg: %s, optind = %d\n", optarg, optind);
+			break;
+
+		case 'b'...'e':
+			printf("option: %c\n", c);
+			break;
+
+		case '?':
+			printf("unrecgonize option -%c\n", optopt);
+			break;
+		}
+	}
 
 	return 0;
 }

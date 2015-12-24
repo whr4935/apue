@@ -17,6 +17,7 @@
 #include <termios.h>
 #include <pthread.h>
 
+#include <sys/syscall.h>
 #include <sys/stat.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
