@@ -7,5 +7,5 @@ int misc();
 int test_strtok();
 int test_exit();
 int test_getopt(int argc, char **argv);
-
+int test_crc();
 #endif

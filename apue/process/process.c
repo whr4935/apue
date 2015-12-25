@@ -213,25 +213,27 @@ static void* priority_test_thread(void* arg)
 	cpu_set_t cpu_set;
 	int ret;
 	int policy;
+	int priority;
 	struct sched_param s_param;
 	int i;
 	int cpu_total = get_nprocs();
 	int tid;
-	unsigned long long count =0;
+	unsigned long long count = 0;
 	struct timespec t_spec;
 	int id;
 	pthread_attr_t attr;
 
 	id = 0;
-//	id = getpid();
+	//	id = getpid();
 	id = gettid();
-//	id = pthread_self();
+	//	id = pthread_self();
 
-//	printf("tid: %d, pthread_self id: %d\n", gettid(), pthread_self());
+	//	printf("tid: %d, pthread_self id: %d\n", gettid(), pthread_self());
 
-//	pthread_detach(pthread_self());
+	//	pthread_detach(pthread_self());
 
-	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+
+	setpriority(PRIO_PROCESS, 0, -2);
 
 	policy = sched_getscheduler(id);
 	printf("thread ");
@@ -253,10 +255,18 @@ static void* priority_test_thread(void* arg)
 		break;
 	}
 
-	ret = sched_getparam(id, &s_param);
-	if (ret < 0)
-		err_sys("sched_getparam");
-	printf("thread priority: %d\n", s_param.__sched_priority);
+
+	if (policy == SCHED_OTHER) {
+		ret = getpriority(PRIO_PROCESS, 0);
+		priority = ret;
+	} else {
+		ret = sched_getparam(id, &s_param);
+		if (ret < 0)
+			err_sys("sched_getparam");
+		priority = s_param.__sched_priority;
+	}
+
+	printf("thread priority: %d\n", priority);
 	
 // 
 // 
@@ -358,6 +368,45 @@ int test_control_priority()
 //	pri = getpriority(PRIO_PROCESS, 0);
 //	printf("current priority: %d\n", pri);
 
+#if 1
+	///////////////////////////////////
+	//创建测试线程
+	pthread_mutex_init(&priority_mutex, NULL);
+	pthread_cond_init(&priority_cond, NULL);
+
+	ret = pthread_barrier_init(&barrier, NULL, 2);
+	if (ret != 0)
+		err_exit(ret, "pthread_barrier_init");
+
+	ret = pthread_attr_init(&attr);
+	if (ret != 0)
+		err_exit(ret, "pthread_attr_init");
+	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
+	pthread_attr_setschedpolicy(&attr, SCHED_OTHER);
+	s_param.__sched_priority = 0;//sched_get_priority_max(SCHED_RR)-11;
+	pthread_attr_setschedparam(&attr, &s_param);
+
+	gettimeofday(&end, NULL);
+	end.tv_sec += 5;
+
+	ret = pthread_create(&thr, &attr, priority_test_thread, NULL);
+	if (ret != 0)
+		err_exit(ret, "pthread_create");
+
+	pthread_attr_destroy(&attr);
+
+
+//	ret= pthread_barrier_wait(&barrier);
+//	printf("pthread_barrier_wait return %d\n", ret);
+//	printf("main thread continue...\n");
+
+// 	pthread_mutex_lock(&priority_mutex);
+// 	notify_signal = 1;
+// 	pthread_mutex_unlock(&priority_mutex);
+// 	ret = pthread_cond_signal(&priority_cond);
+// 	if (ret != 0)
+// 		err_exit(ret, "pthread_cond_signal");
+
 	////////////////////////////
 	//设置为实时进程
 	s_param.__sched_priority = sched_get_priority_max(SCHED_RR) - 10;
@@ -393,45 +442,9 @@ int test_control_priority()
 		err_sys("sched_getparam");
 	printf("main thread priority: %d\n", s_param.__sched_priority);
 
-#if 1
-	///////////////////////////////////
-	//创建测试线程
-	pthread_mutex_init(&priority_mutex, NULL);
-	pthread_cond_init(&priority_cond, NULL);
-
-	ret = pthread_barrier_init(&barrier, NULL, 2);
-	if (ret != 0)
-		err_exit(ret, "pthread_barrier_init");
-
-	ret = pthread_attr_init(&attr);
-	if (ret != 0)
-		err_exit(ret, "pthread_attr_init");
-	pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
-	pthread_attr_setschedpolicy(&attr, SCHED_RR);
-	s_param.__sched_priority = sched_get_priority_max(SCHED_RR)-11;
-	pthread_attr_setschedparam(&attr, &s_param);
-
-	gettimeofday(&end, NULL);
-	end.tv_sec += 5;
-
-	ret = pthread_create(&thr, &attr, priority_test_thread, NULL);
-	if (ret != 0)
-		err_exit(ret, "pthread_create");
-
-	pthread_attr_destroy(&attr);
 
 
-//	ret= pthread_barrier_wait(&barrier);
-//	printf("pthread_barrier_wait return %d\n", ret);
-//	printf("main thread continue...\n");
-
-// 	pthread_mutex_lock(&priority_mutex);
-// 	notify_signal = 1;
-// 	pthread_mutex_unlock(&priority_mutex);
-// 	ret = pthread_cond_signal(&priority_cond);
-// 	if (ret != 0)
-// 		err_exit(ret, "pthread_cond_signal");
-
+	///////////////////////////
 	printf("main begin test...\n");
 	for (;;) {
 		++count;

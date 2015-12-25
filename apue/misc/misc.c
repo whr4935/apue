@@ -8,7 +8,8 @@ int TEST_misc(int argc, char **argv)
 	//misc();
 	//test_strtok();
 	//test_exit();
-	test_getopt(argc, argv);
+	//test_getopt(argc, argv);
+	test_crc();
 
 	return 0;
 }

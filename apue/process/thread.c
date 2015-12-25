@@ -37,6 +37,8 @@ static void* thr_func(void *arg)
 	err_msg("thread begin enter loop...");
 	for (;;) {
 		sleep(1);
+		err_msg("thread exit ahead...");
+		pthread_exit(1);
 	}
 	err_msg("exit...");
 	
@@ -71,7 +73,8 @@ int test_pthread_create()
 
 	sleep(2);
 
-	pthread_cancel(thr_id);
+	ret = pthread_cancel(thr_id);
+	printf("pthread cancel ret = %d\n", ret);
 //	sleep(5);
 
 //	ret = pthread_detach(thr_id);

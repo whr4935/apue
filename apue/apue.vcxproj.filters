@@ -47,6 +47,9 @@
     <ClCompile Include="process\term.c">
       <Filter>process</Filter>
     </ClCompile>
+    <ClCompile Include="misc\crc.c">
+      <Filter>misc</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h" />
@@ -70,6 +73,9 @@
     </ClInclude>
     <ClInclude Include="process\term.h">
       <Filter>process</Filter>
+    </ClInclude>
+    <ClInclude Include="misc\crc.h">
+      <Filter>misc</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
