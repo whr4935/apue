@@ -309,17 +309,105 @@ ulong cm_tab(p_cm_t p_cm, int index)
 /******************************************************************************/
 /*                             End of crcmodel.c                              */
 /******************************************************************************/
+#define		CRC8_POLY	0x07
+#define		CRC16_POLY	0x1021
+#define		CRC32_POLY	0x04C11DB7
+
+int crc_bits_alg(char *pdata, int len, int crc, int width, int poly)
+{
+	int i;
+	int offset = 1 << width - 1;
+	
+	while (len--) {
+		crc ^= (*pdata++ << width - 8);
+		for (i = 0; i < 8; ++i) {
+			if (crc & offset)
+				crc = (crc << 1) ^ poly;
+			else
+				crc <<= 1;
+		}
+	}
+
+	return crc;
+}
+
+int crc_table[256];
+
+int crc_create_tabel(int width, int poly)
+{
+	int i, n;
+	int offset = 1 << width - 1;
+	int crc;
+	int mask;
+
+	for (i = 0; i < 256; ++i) {
+		crc = i << width-8;
+		for (n = 0; n < 8; ++n) {
+			if (crc & offset)
+				crc = (crc << 1) ^ poly;
+			else
+				crc <<= 1;
+		}
+
+		mask = 1 << 32;
+		mask = ~0 << 31;
+		mask = ~0 << 8;
+		mask = ((~0L) << width);		//左移32位不可移植
+//		crc_table[i] = crc & (width % 32 ? (~(~0 << width)) : ~0);
+		crc_table[i] = crc & (((1 << width - 1) - 1) << 1 | 1L);
+	}
+
+	return 0;
+}
+
+int crc_table_alg(char *pdata, int len, int crc, int width, int *table)
+{
+	//每次处理一个字节数据，先在后面补上width-8个0，然后左移8位，自动补上剩下的8个0
+	//本来数据应该分4次一个字节一个字节地移动到最高位，但由于数据后面带的是0，真正
+	//有效果的是数据字节本身所在的那一列，所以直接把数据字节与crc寄存器异或即可。
+	while (len--) {
+		crc = (crc << 8) ^ table[((crc >> (width-8))&0xFF) ^ *pdata++];
+	}
+
+	return crc;
+}
+
 
 int test_crc()
 {
-	char pdata[] = "12";
-	int len = ARRAY_SIZE(pdata);
+	char pdata[] = "1";
+	int len = strlen(pdata);
 	cm_t cm, *p_cm = &cm;
 	int crc;
 	int i;
 
-	p_cm->cm_width = 16;                                       
-	p_cm->cm_poly = 0x1021L;
+#if 0
+	crc = crc_bits_alg(pdata, len, 0, 8, CRC8_POLY);
+	printf("crc = 0x%X\n", (unsigned char)crc);
+
+	crc_create_tabel(8, CRC8_POLY);
+	crc = crc_table_alg(pdata, len, 0, 8, crc_table);
+	printf("crc = 0x%X\n", (unsigned char)crc);
+
+#elif 1
+	crc = crc_bits_alg(pdata, len, 0, 16, CRC16_POLY);
+	printf("crc = 0x%X\n", (unsigned short)crc);
+
+	crc_create_tabel(16, CRC16_POLY);
+	crc = crc_table_alg(pdata, len, 0, 16, crc_table);
+	printf("crc = 0x%X\n", (unsigned short)crc);
+
+#elif 0
+	crc = crc_bits_alg(pdata, len, 0, 32, CRC32_POLY);
+	printf("crc = 0x%0X\n", crc);
+
+	crc_create_tabel(32, CRC32_POLY);
+	crc = crc_table_alg(pdata, len, 0, 32, crc_table);
+	printf("crc = 0x%0X\n", crc);
+#endif
+
+	p_cm->cm_width = 32;                                       
+	p_cm->cm_poly = CRC32_POLY;
 	p_cm->cm_init = 0L;
 	p_cm->cm_refin = FALSE;
 	p_cm->cm_refot = FALSE;
@@ -329,7 +417,7 @@ int test_crc()
 	cm_blk(p_cm, pdata, len);
 
 	crc = cm_crc(p_cm);
-	printf("crc  = %#x\n", crc);
+	printf("crc = 0x%X\n", crc);
 
 	return 0;
 }

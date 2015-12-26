@@ -78,4 +78,9 @@
       <Filter>misc</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="misc\crc_v3.txt">
+      <Filter>misc</Filter>
+    </Text>
+  </ItemGroup>
 </Project>
