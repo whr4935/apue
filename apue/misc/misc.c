@@ -9,7 +9,8 @@ int TEST_misc(int argc, char **argv)
 	//test_strtok();
 	//test_exit();
 	//test_getopt(argc, argv);
-	test_crc();
+	//test_crc();
+	test_sprintf();
 
 	return 0;
 }
@@ -100,6 +101,22 @@ int test_getopt(int argc,char **argv)
 			break;
 		}
 	}
+
+	return 0;
+}
+
+int test_sprintf()
+{
+	char buf[100];
+	
+	memset(buf, -1, 100);
+	sprintf(buf, "%*.*s", 5, 3, "abcd");		//精度决定最大打印的字符数
+
+	memset(buf, -1, 100);
+	sprintf(buf, "%*.*d", 7, 8, 1234);			//精度决定需要打印的最少数字字符个数，不足补零
+
+	memset(buf, -1, 100);
+	sprintf(buf, "%*.*f", 5, 1, 1234.5678);		//精度决定小数点后打印位数
 
 	return 0;
 }

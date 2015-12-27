@@ -8,4 +8,6 @@ int test_strtok();
 int test_exit();
 int test_getopt(int argc, char **argv);
 int test_crc();
+int test_sprintf();
+
 #endif

@@ -365,8 +365,9 @@ int crc_table_alg(char *pdata, int len, int crc, int width, int *table)
 	//每次处理一个字节数据，先在后面补上width-8个0，然后左移8位，自动补上剩下的8个0
 	//本来数据应该分4次一个字节一个字节地移动到最高位，但由于数据后面带的是0，真正
 	//有效果的是数据字节本身所在的那一列，所以直接把数据字节与crc寄存器异或即可。
+
 	while (len--) {
-		crc = (crc << 8) ^ table[((crc >> (width-8))&0xFF) ^ *pdata++];
+		crc = (crc << 8) ^ table[(((crc >> (width-8))&0xFF) ^ *pdata++) & 0xFF];
 	}
 
 	return crc;
@@ -381,7 +382,8 @@ int test_crc()
 	int crc;
 	int i;
 
-#if 0
+#if 1
+	pdata[0] = 0xF6;
 	crc = crc_bits_alg(pdata, len, 0, 8, CRC8_POLY);
 	printf("crc = 0x%X\n", (unsigned char)crc);
 
@@ -389,7 +391,18 @@ int test_crc()
 	crc = crc_table_alg(pdata, len, 0, 8, crc_table);
 	printf("crc = 0x%X\n", (unsigned char)crc);
 
-#elif 1
+	printf("random number: %d\n");
+	crc = 246;
+	for (i = 0; i < 40; ++i) {
+		crc = crc_table_alg(&crc, 1, 0, 8, crc_table);
+		crc &= 0xFF;
+		printf("%d ", (unsigned char)crc);
+		if (i && i % 10 == 0)
+			printf("\n");
+	}
+	printf("\n");
+
+#elif 0
 	crc = crc_bits_alg(pdata, len, 0, 16, CRC16_POLY);
 	printf("crc = 0x%X\n", (unsigned short)crc);
 
