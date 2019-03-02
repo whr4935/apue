@@ -1,0 +1,17 @@
+/Debug
+/C++ Primer 5 src VisualStudio2012
+/*.suo
+/C_plus_plus_primer.opensdf
+/C_plus_plus_primer.sdf
+/C_plus_plus_primer.sln
+/.vs
+src/GPATH
+src/GRTAGS
+src/GSYMS
+src/GTAGS
+src/bin/
+src/build/
+compile_commands.json
+.ycm_extra_conf.py
+cscope.out
+.ycm_extra_conf.py
