@@ -1,0 +1,32 @@
+{
+  "buildFiles": [
+    "/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/Android.mk"
+  ],
+  "cleanCommands": [
+    "/home/whr/workspace/whr/software/android-sdk/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/Android.mk APP_ABI\u003dx86 NDK_ALL_ABIS\u003dx86 NDK_DEBUG\u003d0 APP_PLATFORM\u003dandroid-19 NDK_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/release/obj NDK_LIBS_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/release/lib clean"
+  ],
+  "libraries": {
+    "hello-jni-release-x86": {
+      "buildCommand": "/home/whr/workspace/whr/software/android-sdk/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/Android.mk APP_ABI\u003dx86 NDK_ALL_ABIS\u003dx86 NDK_DEBUG\u003d0 APP_PLATFORM\u003dandroid-19 NDK_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/release/obj NDK_LIBS_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/release/lib /home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/release/obj/local/x86/libhello-jni.so",
+      "toolchain": "toolchain-x86",
+      "abi": "x86",
+      "artifactName": "hello-jni",
+      "files": [
+        {
+          "src": "/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/hello-jni.c",
+          "flags": "\"-ffunction-sections\" \"-funwind-tables\" \"-no-canonical-prefixes\" \"-g\" \"-fstack-protector-strong\" \"-O2\" \"-DNDEBUG\" \"-I/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni\" \"-DANDROID\" \"-Wa,--noexecstack\" \"-Wformat\" \"-Werror\u003dformat-security\" \"-isystem\" \"/home/whr/workspace/whr/software/android-sdk/ndk-bundle/platforms/android-19/arch-x86/usr/include\""
+        }
+      ],
+      "output": "/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/release/obj/local/x86/libhello-jni.so"
+    }
+  },
+  "toolchains": {
+    "toolchain-x86": {
+      "cCompilerExecutable": "/home/whr/workspace/whr/software/android-sdk/ndk-bundle/toolchains/x86-4.9/prebuilt/linux-x86_64/bin/i686-linux-android-gcc"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": []
+}

@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">HelloMoon</string>
+    <string name="hellomoon_play">Play</string>
+    <string name="hellomoon_stop">Stop</string>
+    <string name="hellomoon_description">Neil ArmStrong stepping</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+</resources>

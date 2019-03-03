@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">GeoQuiz</string>
+    <string name="question_text">Are you ok?</string>
+    <string name="toast_true">Correct</string>
+    <string name="toast_false">InCorrect!</string>
+    <string name="question_1">The Question one</string>
+    <string name="question_2">The Question two</string>
+    <string name="question_3">The Question three</string>
+    <string name="question_4">The Question four</string>
+    <string name="check_button">Cheat!</string>
+    <string name="warning_text">Are you sure you want to do this?</string>
+    <string name="show_answer_button">Show Answer</string>
+    <string name="judgment_toast">Cheating is wrong.</string>
+</resources>

@@ -1,0 +1,32 @@
+{
+  "buildFiles": [
+    "/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/Android.mk"
+  ],
+  "cleanCommands": [
+    "/home/whr/workspace/whr/software/android-sdk/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/Android.mk APP_ABI\u003dmips64 NDK_ALL_ABIS\u003dmips64 NDK_DEBUG\u003d1 APP_PLATFORM\u003dandroid-21 NDK_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/debug/obj NDK_LIBS_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/debug/lib clean"
+  ],
+  "libraries": {
+    "hello-jni-debug-mips64": {
+      "buildCommand": "/home/whr/workspace/whr/software/android-sdk/ndk-bundle/ndk-build NDK_PROJECT_PATH\u003dnull APP_BUILD_SCRIPT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/Android.mk APP_ABI\u003dmips64 NDK_ALL_ABIS\u003dmips64 NDK_DEBUG\u003d1 APP_PLATFORM\u003dandroid-21 NDK_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/debug/obj NDK_LIBS_OUT\u003d/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/debug/lib /home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/debug/obj/local/mips64/libhello-jni.so",
+      "toolchain": "toolchain-mips64",
+      "abi": "mips64",
+      "artifactName": "hello-jni",
+      "files": [
+        {
+          "src": "/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni/hello-jni.c",
+          "flags": "\"-fpic\" \"-finline-functions\" \"-ffunction-sections\" \"-funwind-tables\" \"-fstack-protector-strong\" \"-fmessage-length\u003d0\" \"-fno-inline-functions-called-once\" \"-fgcse-after-reload\" \"-frerun-cse-after-loop\" \"-frename-registers\" \"-no-canonical-prefixes\" \"-g\" \"-O0\" \"-UNDEBUG\" \"-I/home/whr/project/android_studio/Learn/GeoQuiz/app/src/main/jni\" \"-DANDROID\" \"-Wa,--noexecstack\" \"-Wformat\" \"-Werror\u003dformat-security\" \"-isystem\" \"/home/whr/workspace/whr/software/android-sdk/ndk-bundle/platforms/android-21/arch-mips64/usr/include\""
+        }
+      ],
+      "output": "/home/whr/project/android_studio/Learn/GeoQuiz/app/build/intermediates/ndkBuild/debug/obj/local/mips64/libhello-jni.so"
+    }
+  },
+  "toolchains": {
+    "toolchain-mips64": {
+      "cCompilerExecutable": "/home/whr/workspace/whr/software/android-sdk/ndk-bundle/toolchains/mips64el-linux-android-4.9/prebuilt/linux-x86_64/bin/mips64el-linux-android-gcc"
+    }
+  },
+  "cFileExtensions": [
+    "c"
+  ],
+  "cppFileExtensions": []
+}

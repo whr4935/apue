@@ -1,0 +1,4 @@
+redirect.pyc teststreams.pyc
+__pycache__
+.idea
+*.pyc

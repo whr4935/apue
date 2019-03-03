@@ -1,0 +1,13 @@
+<RCC>
+    <qresource prefix="/spreadsheet">
+        <file alias="icon">images/icon.png</file>
+        <file alias="new">images/new.png</file>
+        <file alias="open">images/open.png</file>
+        <file alias="save">images/save.png</file>
+        <file alias="cut">images/cut.png</file>
+        <file alias="copy">images/copy.png</file>
+        <file alias="paste">images/paste.png</file>
+        <file alias="find">images/find.png</file>
+        <file alias="gotocell">images/gotocell.png</file>
+    </qresource>
+</RCC>
