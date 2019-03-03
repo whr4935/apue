@@ -1,0 +1,7 @@
+tags
+cscope.files
+cscope.in.out
+cscope.out
+cscope.po.out
+*.o
+parse_config_file
