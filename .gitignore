@@ -8,3 +8,4 @@ obj
 VisualGDBCache
 *.vcxproj.user
 apue.vcxproj
+out/
