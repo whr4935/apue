@@ -4,7 +4,7 @@ class Base
 {
     virtual void func(int) = 0;
 
-private:
+protected:
     int base1 = 81;
 };
 
@@ -45,6 +45,7 @@ public:
 
     void fff() {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
+        base1;
     }
 
     //virtual void func(double d) {
