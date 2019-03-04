@@ -26,6 +26,7 @@ extern int test_caller();
 extern int test_thread();
 extern int test_atomic();
 extern int test_move();
+extern void testDeferredActions();
 
 //////////////////////////////////////////////////////////////////////////
 int TEST_stdlib(int argc, char **argv)
@@ -55,7 +56,8 @@ int TEST_stdlib(int argc, char **argv)
     //test_caller();
     //test_thread();
     //test_atomic();
-    test_move();
+    //test_move();
+    testDeferredActions();
 
     std::cout << "======================\n"<< std::endl;
     return ret;

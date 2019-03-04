@@ -86,41 +86,4 @@ private:
     node* mMiddle;
 };
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-struct node {
-    int key;
-    struct node *next;
-};
-
-void init_list(struct node **head);
-void delete_next(struct node *head, struct node* t);
-struct node* insert_after(int v, struct node* t);
-void destroy_list(struct node *head);
-void print_list(struct node* head);
-
-
-
 #endif // LIST_H
