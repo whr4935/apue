@@ -3,7 +3,7 @@
 namespace  Test {
 
 }
-class Test::A;
+//class Test::A;
 
 
 int main(int argc, char *argv[])

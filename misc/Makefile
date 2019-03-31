@@ -14,7 +14,7 @@ ifeq ($(OS), Windows_NT)
 
 SRC_DIR :=
 ifeq ($(OS_VER), Linux)
-	SRC_DIR := $(shell find . -maxdepth 1 -type d)
+	SRC_DIR := $(shell find . -maxdepth 1 -path ./gtest -prune -o -type d -print)
 else
 	SHELL = cmd
 SRC_DIR := $(shell dir /ad /b)
@@ -26,11 +26,13 @@ SRC_DIR += .
 
 SRC := $(foreach dir, $(SRC_DIR), $(wildcard $(dir)/*.c))
 SRC += $(foreach dir, $(SRC_DIR), $(wildcard $(dir)/*.cpp))
+SRC += $(foreach dir, $(SRC_DIR), $(wildcard $(dir)/*.cc))
 
 TARGET := $(addprefix out/, $(basename $(notdir $(patsubst ./%, %, $(SRC)))))
 
 vpath %.c $(SRC_DIR)
 vpath %.cpp $(SRC_DIR)
+vpath %.cc $(SRC_DIR)
 
 all:out $(LIBS) $(TARGET)
 
@@ -48,6 +50,9 @@ out/%:%.c
 		$(CC) $(CFLAGS) -o $@ $< $(LIBS) -MD -MF $(@:=.dep)
 
 out/%:%.cpp
+		$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) -MD -MF $(@:=.dep)
+
+out/%:%.cc
 		$(CXX) $(CXXFLAGS) -o $@ $< $(LIBS) -MD -MF $(@:=.dep)
 
 clean:

@@ -14,5 +14,9 @@ int main(int argc, char *argv[])
     printf("d = %d, %x\n", d, d);
 
 
+    char c1 = 1;
+    char c2 = -128;
+    char c3 = c2 - c1;
+    printf("c3 = %d\n", c3);
     return 0;
 }
