@@ -1,15 +1,15 @@
-TARGET := threadpool
-CXXFLAGS := -std=c++11
+include $(BUILD_DIR)/Header.mk
 
-all:$(TARGET)
+MODULE  := threadpool
+SRC_DIR :=
+DEFINE  :=
+INCLUDE :=
+LDFLAGS :=
+LIBS    := -L$(LIBS_DIR)
+EXECUTABLE_LDFLAGS := -Wl,-rpath="out/lib"
+EXECUTABLE_LIBS := -pthread -lgtest -lgtest_main
 
--include testThreadPool.d
 
-$(TARGET):testThreadPool.o
-	$(CXX) -o $@ $^ -pthread -lgtest -lgtest_main
+$(call build-target, executable)
 
-%.o:%.cpp
-	$(CXX) $(CXXFLAGS) -c -o $@ $< -MMD -MF $(@:.o=.d)
-
-clean:
-	rm $(TARGET) testThreadPool.o testThreadPool.d
+include $(BUILD_DIR)/Footer.mk

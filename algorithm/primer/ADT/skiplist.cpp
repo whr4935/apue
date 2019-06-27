@@ -3,6 +3,7 @@
 #include <time.h>
 #include <algorithm>
 #include <chrono>
+#include <iostream>
 
 template<typename K, typename T, unsigned char kMaxLevel>
 SkipList<K, T, kMaxLevel>::SkipList()
