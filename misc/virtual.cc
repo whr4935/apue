@@ -1,4 +1,7 @@
 #include <iostream>
+#include <typeinfo>
+
+#define NOT_IMPLEMENTED() printf("%s Not Implemented!\n", __FUNCTION__) 
 
 struct Base
 {
@@ -58,8 +61,18 @@ struct B2: public B1
 
 struct C :public A2, public B2
 {
+    C() : mArray{1, 2, 3} {}
+    void test() {
+        printf("%d %d %d\n", mArray[0], mArray[1], mArray[2]);
+    }
 
+    int mArray[3];
 };
+
+void virtual_func(int a = 10)
+{
+
+}
 
 
 int main(int argc, char *argv[])
@@ -68,8 +81,21 @@ int main(int argc, char *argv[])
     A1* a1 = &a;
     a1->t1(1);
 
+    NOT_IMPLEMENTED();
+
+
+
 
     C c; 
     std::cout <<c.mData <<std::endl;
+    c.test();
+
+    bool ret = typeid(A3) == typeid(*a1);
+    std::cout << "ret = " <<ret << std::endl;
+    std::cout << typeid(*a1).name() << std::endl;
+
+    auto p = dynamic_cast<A2*>(a1);
+    std::cout << "p = " << p <<std::endl;
+
     return 0;
 }

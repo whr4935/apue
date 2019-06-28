@@ -7,8 +7,30 @@ struct A
         a = 10888;
         std::cout << __PRETTY_FUNCTION__ << " " << a << std::endl;
     }
+
+    void print() {
+        std::cout << "aaa" << std::endl;
+    }
 };
 
+void testFunc(std::shared_ptr<A>& data)
+{
+    data->print();
+    std::cout << __LINE__ << ": data.use_count = " << data.use_count() << std::endl;
+}
+
+template <typename...Args>
+void Call(void(*p)(Args...), Args&&... args)
+{
+    auto f = std::bind(p, std::forward<Args&&>(args)...); 
+    f();
+}
+
+template <typename T>
+void Call2(std::shared_ptr<T> d)
+{
+    std::cout << "ref count: " << d.use_count() << std::endl;
+}
 
 void testDeferredActions()
 {
@@ -27,4 +49,9 @@ void testDeferredActions()
 
     std::cout << "arg1: " << arg1 << std::endl;
     std::cout << "testDeferredActions finished!" << std::endl;
+
+    Call(testFunc, a1);
+
+    Call2(a1);
+
 }
