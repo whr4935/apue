@@ -13,6 +13,6 @@ int main(int argc, char *argv[])
     printf("a:%d, b:%d\n", a, b);
 
     f();
-    printf("x = %#x, y = %#x\n", x, y);  
+    printf("x = %d, y = %d\n", x, y);  
     return 0;
 }
