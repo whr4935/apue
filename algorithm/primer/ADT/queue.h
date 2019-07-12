@@ -1,8 +1,6 @@
 #ifndef QUEUE_H
 #define QUEUE_H
 
-#include <utils.h>
-
 int init_queue();
 bool queue_empty();
 int queue_size();

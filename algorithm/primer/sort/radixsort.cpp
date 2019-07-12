@@ -1,4 +1,6 @@
-#include <includes.h>
+#include <stdio.h>
+#include <utils/utils.h>
+#include <math.h>
 #include "radixsort.h"
 
 
@@ -45,7 +47,7 @@ void test_radix_exchange_sort()
 
     /////////////
     int size = 1024 *1024 * 10;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -117,7 +119,7 @@ void test_straight_radix_sort()
 
     /////////////
     int size = 1024 *1024 * 10;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));

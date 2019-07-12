@@ -1,4 +1,4 @@
-#include <includes.h>
+#include <stdio.h>
 
 #include "elementary_sort.h"
 #include "quicksort.h"
@@ -9,7 +9,6 @@
 
 int test_sort(int argc, char **argv)
 {
-    BEGIN_MODULE;
 
 //    test_elementary_sort();
 
@@ -24,7 +23,6 @@ int test_sort(int argc, char **argv)
 //    test_merge_sort();
 
 
-    END_MODULE;
     return 0;
 }
 

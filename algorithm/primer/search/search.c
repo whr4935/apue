@@ -1,4 +1,3 @@
-#include <includes.h>
 
 #include "elementary_search.h"
 
@@ -22,7 +21,6 @@ union U{
 
 int test_search(int argc, char **argv)
 {
-    BEGIN_MODULE;
 
 //    printf("sizeof of U:%d\n", sizeof(union U));
 
@@ -37,6 +35,4 @@ int test_search(int argc, char **argv)
     test_elementary_search();
 
     test_rbtree_search();
-
-    END_MODULE;
 }

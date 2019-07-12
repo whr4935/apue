@@ -1,5 +1,4 @@
-#include <includes.h>
-
+#include <stdio.h>
 
 int gcd(int u, int v)
 {

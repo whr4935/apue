@@ -1,7 +1,10 @@
-#include <includes.h>
+#include <stdio.h>
+#include <utils/utils.h>
 #include "elementary_search.h"
 #include "ADT/stack.h"
 #include "ADT/queue.h"
+#include <sort/elementary_sort.h>
+#include <sort/quicksort.h>
 
 int seq_search(const int a[], int N, int v)
 {
@@ -30,7 +33,7 @@ void test_seq_search()
 
     /////////////
     int size = 1024 *1024 * 10 ;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     test_data[0] = test_data[1] = 1;
@@ -111,7 +114,7 @@ void test_bin_search()
 
     /////////////
     int size = 1024 *1024 * 10 ;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     test_data[0] = test_data[1] = 1;
@@ -208,11 +211,11 @@ void in_bin_tree(int *in_index)
     printf("sort bin tree:");
     while (x!=z || !stack_empty()) {
         while (x != z) {
-            push(x);
+            push((long)x);
             x = x->l;
         }
 
-        x = pop();
+        x = (struct node*)pop();
         printf("%3d%s ", x->key, x->red?"[r]":"");
         if (in_index)
             *in_index++ = x->info;
@@ -230,17 +233,17 @@ void pre_bin_tree(int *pre_index)
     init_stack();
 
     if (x != z)
-        push(x);
+        push((long)x);
 
     printf("pre traverse bin tree:");
     while (!stack_empty()) {
-        x = pop();
+        x = (struct node*)pop();
         printf("%3d ", x->key);
         if (pre_index)
             *pre_index++ = x->info;
 
-        if (x->r != z) push(x->r);
-        if (x->l != z) push(x->l);
+        if (x->r != z) push((long)x->r);
+        if (x->l != z) push((long)x->l);
     }
     printf("\n");
 }
@@ -254,17 +257,17 @@ void post_bin_tree()
     printf("post traverse bin tree:");
     while (x!=z || !stack_empty()) {
         while (x != z) {
-            push(x);
+            push((long)x);
             x = x->l;
         }
 
-        x = pop();
+        x = (struct node*)pop();
         if (x->visited) {
             printf("%3d ", x->key);
             x = z;
         } else {
-            x->visited = TRUE;
-            push(x);
+            x->visited = true;
+            push((long)x);
             x = x->r;
         }
     }
@@ -278,14 +281,14 @@ void level_bin_tree()
     init_queue();
 
     if (x != z)
-        put(x);
+        put((long)x);
 
     printf("level traverse bin tree:");
     while (!queue_empty()) {
         get(&x);
         printf("%3d ", x->key);
-        if (x->l != z) put(x->l);
-        if (x->r != z) put(x->r);
+        if (x->l != z) put((long)x->l);
+        if (x->r != z) put((long)x->r);
     }
     printf("\n");
 }
@@ -399,7 +402,7 @@ void dump_tree(void* arg)
     struct node_info **tail, **head;
     tail = head = queue;
 
-    info = calloc(1, sizeof(struct node_info));
+    info = (struct node_info*)calloc(1, sizeof(struct node_info));
     info->level = 0;
     info->pnode = x;
     info->pos = 0;
@@ -417,7 +420,7 @@ void dump_tree(void* arg)
             ppl = levels + child_level;
 
             if (t->l != z) {
-                info = calloc(1, sizeof(struct node_info));
+                info = (struct node_info*)calloc(1, sizeof(struct node_info));
                 info->level = child_level;
                 info->pnode = t->l;
                 info->pos = pl->pos;
@@ -435,7 +438,7 @@ void dump_tree(void* arg)
             }
 
             if (t->r != z) {
-                info = calloc(1, sizeof(struct node_info));
+                info = (struct node_info*)calloc(1, sizeof(struct node_info));
                 info->level = child_level;
                 info->pnode = t->r;
                 info->pos = pl->pos+1;

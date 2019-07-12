@@ -1,4 +1,7 @@
-#include <includes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <utils/utils.h>
+#include <limits.h>
 #include "heapsort.h"
 
 #define MAX_HEAP_SIZE     100
@@ -102,7 +105,7 @@ void test_heap_sort()
 
     /////////////
     int size = 1024 *1024 * 10;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));

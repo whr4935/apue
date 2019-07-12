@@ -1,4 +1,7 @@
-#include <includes.h>
+#include <stdio.h>
+#include <utils/utils.h>
+#include <stdlib.h>
+#include <limits.h>
 
 //////////////////////////////////////////////
 
@@ -34,7 +37,7 @@ int test_select_sort()
     print_array(data, sizeof(data)/sizeof(*data));
 
     int size = 102 * 1024;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -80,7 +83,7 @@ void test_bubble_sort()
     print_array(data, sizeof(data)/sizeof(*data));
 
     int size = 102 * 1024;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -126,7 +129,7 @@ void test_insert_sort()
     print_array(data+1, sizeof(data)/sizeof(*data) - 1);
 
     int size = 102 * 1024;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -229,7 +232,7 @@ void test_shell_sort()
     print_array(data+1, sizeof(data)/sizeof(*data) - 1);
 
     int size = 1024 * 10240;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -293,7 +296,7 @@ void test_distribution_count_sort()
     print_array(data, sizeof(data)/sizeof(*data));
 
     int size = 1024 * 1024 * 10;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));

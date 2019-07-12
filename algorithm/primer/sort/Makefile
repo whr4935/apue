@@ -3,7 +3,7 @@ include $(BUILD_DIR)/Header.mk
 MODULE  := 
 SRC_DIR :=
 DEFINE  :=
-INCLUDE := -I..
+INCLUDE := -I../
 LDFLAGS :=
 LIBS    := -L$(LIBS_DIR)
 EXECUTABLE_LDFLAGS += 

@@ -1,4 +1,6 @@
-#include <includes.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <utils/utils.h>
 #include "quicksort.h"
 
 #include "ADT/stack.h"
@@ -206,7 +208,7 @@ void test_quick_sort()
 
     /////////////
     int size = 1024 *1024 * 20;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -299,7 +301,7 @@ void test_select_kth()
 
     /////////////
     int size = 1024 *1024 * 20;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
 
 
     srand(time(NULL));

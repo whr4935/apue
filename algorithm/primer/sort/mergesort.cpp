@@ -1,9 +1,6 @@
-#include <includes.h>
+#include <stdio.h>
 #include "mergesort.h"
-
-
-
-
+#include <utils/utils.h>
 
 void merge_sort_core(int a[], int b[], int l, int r)
 {
@@ -32,7 +29,7 @@ void merge_sort_core(int a[], int b[], int l, int r)
 
 void merge_sort(int a[], int N)
 {
-    int *b = calloc(sizeof(int), N);
+    int *b = (int*)calloc(sizeof(int), N);
 
     merge_sort_core(a, b, 0, N-1);
 
@@ -54,7 +51,7 @@ void test_merge_sort()
 
     /////////////
     int size = 1024 *1024 * 10;
-    int *test_data = malloc(size * sizeof(int));
+    int *test_data = (int*)malloc(size * sizeof(int));
     int i;
 
     srand(time(NULL));
@@ -67,7 +64,7 @@ void test_merge_sort()
 
     merge_sort(test_data, size);
 
-    benchmark_end(&b, "merge_sort");
+    /*benchmark_end(&b, "merge_sort");*/
 
     print_array(test_data, 100);
 

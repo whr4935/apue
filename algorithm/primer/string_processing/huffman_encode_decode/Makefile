@@ -1,12 +1,29 @@
+include $(BUILD_DIR)/Header.mk
 
-TARGET := h_enc h_dec
+MODULE  := 
+SRC_DIR :=
+DEFINE  :=
+INCLUDE :=
+LDFLAGS :=
+LIBS    := -L$(LIBS_DIR)
+EXECUTABLE_LDFLAGS := -Wl,-rpath="out/lib"
+EXECUTABLE_LIBS := 
 
-CC=g++
 
-all:$(TARGET)
+$(call build-target, custom)
 
-%:%.cpp
-	$(CC) -o $@ $<
+include $(BUILD_DIR)/Footer.mk
 
-clean:
-	-rm -rf $(TARGET)
+custom:$(OUT_DIR)/h_enc $(OUT_DIR)/h_dec
+
+
+$(OUT_DIR)/h_enc:$(OBJ_DIR)/h_enc.o
+	$(build-executable)
+
+
+$(OUT_DIR)/h_dec:$(OBJ_DIR)/h_dec.o
+	$(build-executable)
+
+custom-clean:
+	-rm -rf $(OUT_DIR)/h_enc
+	-rm -rf $(OUT_DIR)/h_dec

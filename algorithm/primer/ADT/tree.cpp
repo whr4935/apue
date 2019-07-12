@@ -1,6 +1,9 @@
-#include <utils.h>
+#include <stdio.h>
+#include <utils/utils.h>
 #include <string.h>
 #include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "queue.h"
 #include "stack.h"
