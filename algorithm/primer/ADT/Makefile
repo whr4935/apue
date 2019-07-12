@@ -7,7 +7,7 @@ INCLUDE := -I..
 LDFLAGS :=
 LIBS    := -L$(LIBS_DIR)
 EXECUTABLE_LDFLAGS += 
-EXECUTABLE_LIBS := -lutils 
+EXECUTABLE_LIBS := -lutils
 
 
 $(call build-target, static_library)
