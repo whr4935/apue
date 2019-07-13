@@ -5,18 +5,15 @@
 #include <cassert>
 #include "fifo.h"
 
-size_t round_up_two_power(size_t size)
+static size_t round_up_power_of_two(size_t size)
 {
-    size--;
+    --size;
 
-    size |= size >> 1;
-    size |= size >> 2;
-    size |= size >> 4;
-    size |= size >> 8;
-    size |= size >> 16;
+    for (size_t i = 1; i < sizeof(size_t)*8; i <<= 1) {
+        size |= size >> i;
+    }
 
-    size++;
-
+    ++size;
     return size;
 }
 
@@ -24,7 +21,8 @@ fifo::fifo(size_t size)
 : mSize(size)
 {
     if (mSize&(mSize-1)) {
-        mSize = round_up_two_power(mSize);
+        mSize = round_up_power_of_two(mSize);
+        printf("sizeof(size_t)=%zu, round_up_power_of_two: %zu ==> %zu\n", sizeof(size_t), size, mSize);
     }
     assert((mSize&(mSize-1)) == 0);
 

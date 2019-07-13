@@ -53,11 +53,11 @@ int TEST_stdlib(int argc, char **argv)
     // test_std_move();
     //test_multi_derived();
 
-    //test_caller();
+    test_caller();
     //test_thread();
     //test_atomic();
     //test_move();
-    testDeferredActions();
+    //testDeferredActions();
 
     std::cout << "======================\n"<< std::endl;
     return ret;

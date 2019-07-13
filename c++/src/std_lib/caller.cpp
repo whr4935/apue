@@ -5,18 +5,22 @@
 template <typename F, typename... Args>
 auto makeCaller(F&& f, Args&&... args) -> std::function<decltype(f(args...))()>
 {
+    std::cout << "do makeCaller" << __FUNCTION__ << std::endl;
     return std::bind(std::forward<F>(f), std::forward<Args>(args)...);
 }
 
-template <typename F, typename C, typename... Args>
-auto makeCaller(F&& f, C&& c, Args&&... args) -> std::function<void()>
-{
-    return std::bind(std::forward<F>(f), c, std::forward<Args>(args)...);
-}
+//template <typename F, typename C, typename... Args>
+//auto makeCaller(F&& f, C&& c, Args&&... args) -> std::function<void()>
+//{
+    //return std::bind(std::forward<F>(f), c, std::forward<Args>(args)...);
+//}
 
-void test1(int i, int j)
+void test1(int& i, int j)
 {
+    std::cout << "test1 i addr: " << &i << std::endl;
     std::cout << "i = " << i << " , j = " << j << std::endl;
+
+    i = 88;
 }
 
 int test2()
@@ -100,8 +104,11 @@ Action<F,C,ARGS...> makeAction(F&& f, std::weak_ptr<C>&& c, ARGS&&... args)
 
 int test_caller()
 {
-    auto f = makeCaller(test1, 3, 4);
+    int a = 3;
+    std::cout << "a's addr: " << &a << std::endl;
+    auto f = makeCaller(test1, std::ref(a), 4);
     f();
+    std::cout << "after f(), a = " << a << std::endl;
     auto f2 = makeCaller(test2);
     auto ret = f2();
     std::cout << "ret = " << ret << std::endl;

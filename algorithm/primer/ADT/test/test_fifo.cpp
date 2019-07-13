@@ -2,42 +2,107 @@
 #include <utils/utils_main/utils_main.h>
 #include <assert.h>
 #include <thread>
+#include <fstream>
+#include <iostream>
+
+struct Dummy
+{
+    explicit Dummy(int i) {
+        std::cout << "dummy ctor " << i << std::endl;
+    }
+
+    Dummy(const Dummy& d) {
+        std::cout << "dummy copy ctor " <<  std::endl;
+    }
+};
 
 int test_fifo()
 {
     char test_array[100];
-    char buffer[100];
 
     for (size_t i = 0; i < 100; ++i) {
         test_array[i] = i;
     }
 
-    fifo f(16);
+    bool put_thread_exit = false;
 
-    std::thread t([](fifo* f) {
-        char buffer[10];
-        while (1) {
-            for (size_t i = 0; i < 10; ++i) {
-                buffer[i] = i;
-            }
+    fifo f(3077);
+    fifo &rf = f;
+    printf("f's addr:%p\n", &f);
 
-            int ret = f->put(buffer, 10);
-            if (ret > 0) {
-                printf("[put] %d bytes data\n", ret);
-            }
+    Dummy dummy(1);
+    printf("dummy origin addr:%p\n", &dummy);
 
-            std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(1000));
+    std::thread t([&put_thread_exit](fifo& f, Dummy d) {
+        printf("dummy  addr:%p\n", &d);
+        printf("  f_addr:%p\n", &f);
+        const char* filepath = "/mnt/f/CloudMusic/Gala - Faraway.mp3";
+        std::fstream infile;
+        infile.open(filepath, std::ios_base::in);
+        if (!infile.is_open()) {
+            printf("%s open failed!", filepath);
+            put_thread_exit = true;
+            return 0;
         }
-    }, &f);
+
+        char buffer[1000];
+        char* p = buffer;
+        while (1) {
+            infile.read(buffer, 1000);
+            int size = infile.gcount();
+            if (size <= 0) {
+                printf("readsome return %d\n", size);
+
+                if (infile) {
+                    printf("infile check bool return true!\n");
+                } else {
+                    printf("infile check bool return false!\n");
+                }
+
+                printf("infile check eof return  %d, good:%d\n", infile.eof(), infile.good());
+                break;
+            }
+            p = buffer;
+            while (size) {
+                size_t ret = f.put(p, size);
+                if (ret > 0) {
+                    //printf("[put] %d bytes data\n", ret);
+                    size -= ret;
+                    p += ret;
+                } else {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+                }
+            }
+        }
+
+        put_thread_exit = true;
+        printf("[put] thread finished!\n");
+
+    }, std::ref(rf), dummy);
 
     int ret = 0;
+    
+    std::fstream outfile;
+    outfile.open("test.bin", std::ios_base::out);
+    if (!outfile.is_open()) {
+        printf("open test.bin failed!\n");
+        return -1;
+    }
+
+    char buffer[1024];
     while (1) {
-        ret = f.get(buffer, 16);
+        ret = f.get(buffer, 1024);
         if (ret > 0) {
-            printf("read %d bytes data\n", ret);
+            //printf("read %d bytes data\n", ret);
+            outfile.write(buffer, ret);
+        } else {
+            if (put_thread_exit) {
+                printf("get thread break!\n");
+                break;
+            }
+            //std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(10));
         }
 
-        std::this_thread::sleep_for(std::chrono::duration<int, std::milli>(1000));
     }
 
     t.join();
@@ -48,4 +113,3 @@ int test_fifo()
 }
 
 AUTO_RUN(test_fifo);
-

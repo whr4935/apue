@@ -22,7 +22,7 @@ $(OUT_DIR)/test_list:$(OBJ_DIR)/test_list.o
 $(OUT_DIR)/test_skiplist:$(OBJ_DIR)/test_skiplist.o
 	$(build-executable)
 
-$(OUT_DIR)/test_fifo:$(OBJ_DIR)/test_fifo.o
+$(OUT_DIR)/test_fifo:$(OBJ_DIR)/test_fifo.o $(LIBS_DIR)/libADT.a
 	$(build-executable)
 
 custom-clean:
