@@ -1,0 +1,52 @@
+#!/bin/sh
+
+# invoke rmmod with all arguments we got
+status=`grep ${device} /proc/devices`
+if [ -n "$status" ]; then
+sudo /sbin/rmmod $module $* || exit 1
+else
+	echo "no ${device} to uninstall"
+	exit 0
+fi
+
+# Remove stale nodes
+for i in $(seq 0 3)
+do
+if [ -c "/dev/${device}${i}" ];then
+sudo rm -f /dev/${device}${i}
+fi
+done
+
+if [ -h "/dev/${device}" ];then
+sudo rm -f /dev/${device}
+fi
+
+if [ -c "/dev/${device}priv" ];then
+sudo rm -f /dev/${device}priv
+fi
+
+for i in $(seq 0 3)
+do
+if [ -c "/dev/${device}pipe${i}" ];then
+sudo rm -f /dev/${device}pipe${i}
+fi
+done
+
+if [ -h "/dev/${device}pipe" ];then
+sudo rm -f /dev/${device}pipe
+fi
+
+if [ -c "/dev/${device}single" ];then
+sudo rm -f /dev/${device}single
+fi
+
+if [ -c "/dev/${device}uid" ];then
+sudo rm -f /dev/${device}uid
+fi
+
+if [ -c "/dev/${device}wuid" ];then
+sudo rm -f /dev/${device}wuid
+fi
+
+echo uninstall ${device} success!
+

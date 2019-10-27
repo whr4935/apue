@@ -1,0 +1,24 @@
+#!/bin/sh
+# $Id: scull_load,v 1.4 2004/11/03 06:19:49 rubini Exp $
+
+module="scull"
+device="scull"
+mode="664"
+
+export module
+export device
+export mode
+
+. ../driver_load.param
+
+module="scullp"
+device="scullpipe"
+. ../driver_load.param
+
+
+
+
+
+
+
+

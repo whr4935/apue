@@ -1,0 +1,9 @@
+#!/bin/sh
+module="hello"
+device="hello"
+
+export module
+export device
+
+. ../driver_unload.param
+
