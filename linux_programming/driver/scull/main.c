@@ -30,6 +30,7 @@
 
 //#include <asm/system.h>		/* cli(), *_flags */
 #include <asm/uaccess.h>	/* copy_*_user */
+#include <linux/uaccess.h>
 
 #include "scull.h"		/* local definitions */
 
@@ -400,7 +401,7 @@ ssize_t scull_write(struct file *filp, const char __user *buf, size_t count,
  * The ioctl() implementation
  */
 
-int scull_ioctl(struct inode *inode, struct file *filp,
+long scull_ioctl(struct file *filp,
                  unsigned int cmd, unsigned long arg)
 {
 

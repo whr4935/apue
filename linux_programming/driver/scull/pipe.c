@@ -29,6 +29,7 @@
 #include <asm/uaccess.h>
 #include <linux/sched.h>
 #include <linux/thread_info.h>
+#include <linux/sched/signal.h>
 
 #include "scull.h"		/* local definitions */
 
