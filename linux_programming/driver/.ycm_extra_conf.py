@@ -33,14 +33,16 @@
 import os
 import ycm_core
 
+kernel = os.uname()[2]
+
 flags = [
     '-x',
     'c',
     '-std=gnu99',
     '-isystem',
-    '/usr/src/linux-headers-4.15.0-20/include',
+    '/usr/src/linux-headers-' + kernel + '/include',
     '-isystem',
-    '/usr/src/linux-headers-4.15.0-20/arch/ia64/include',
+    '/usr/src/linux-headers-' + kernel + '/arch/ia64/include',
     '-Iinclude',
     '-I.',
 ]
