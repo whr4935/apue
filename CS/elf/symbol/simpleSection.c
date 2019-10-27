@@ -2,11 +2,12 @@ int printf(const char* format, ...);
 int global_init_val = 84;
 int global_uninit_val;
 
-void func1(int i)
+static __attribute__((visibility("hidden"))) void whr_func1(int i)
 {
     printf("%d\n", i);
 }
 
+#if 0
 int main(void)
 {
     static int static_var = 85;
@@ -18,3 +19,4 @@ int main(void)
 
     return a;
 }
+#endif
