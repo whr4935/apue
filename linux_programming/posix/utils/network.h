@@ -176,8 +176,8 @@ struct unp_in_pktinfo {
 
 typedef	void	Sigfunc(int);	/* for signal handlers */
 
-#define	min(a,b)	((a) < (b) ? (a) : (b))
-#define	max(a,b)	((a) > (b) ? (a) : (b))
+//#define	min(a,b)	((a) < (b) ? (a) : (b))
+//#define	max(a,b)	((a) > (b) ? (a) : (b))
 
 int initserver(int type, const struct sockaddr *addr, socklen_t alen, int qlen);
 int connect_retry(int domain, int type, int protocol, const struct sockaddr *addr, socklen_t alen);

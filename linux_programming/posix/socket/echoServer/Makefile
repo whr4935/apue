@@ -16,10 +16,10 @@ include $(BUILD_DIR)/Footer.mk
 
 custom:$(OUT_DIR)/echoServer $(OUT_DIR)/echoClient
 
-$(OUT_DIR)/echoServer:$(OBJ_DIR)/echoserver.o
+$(OUT_DIR)/echoServer:$(OBJ_DIR)/echoServer.o
 	$(build-executable)
 
-$(OUT_DIR)/echoClient:$(OBJ_DIR)/echoclient.o
+$(OUT_DIR)/echoClient:$(OBJ_DIR)/echoClient.o
 	$(build-executable)
 
 custom-clean:

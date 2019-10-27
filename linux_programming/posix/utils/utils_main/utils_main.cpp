@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <functional>
 #include <execinfo.h>
 #include <memory>
 #include <cxxabi.h>
