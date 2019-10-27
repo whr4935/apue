@@ -39,6 +39,8 @@ flags = [
     '-std=gnu99',
     '-isystem',
     '/usr/src/linux-headers-4.15.0-20/include',
+    '-isystem',
+    '/usr/src/linux-headers-4.15.0-20/arch/ia64/include',
     '-Iinclude',
     '-I.',
 ]
