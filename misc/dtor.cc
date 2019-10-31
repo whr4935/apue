@@ -38,13 +38,13 @@ public:
 };
 
 struct A1 {
-    ~A1() {
+    virtual ~A1() {
         std::cout << "A1" << std::endl;
     }
 };
 
 struct A2 : A1 {
-    virtual ~A2() {
+    ~A2() {
         std::cout << "A2" <<std::endl;
     }
 };
@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
     //delete c;
 
 
-    A1* a = new A3();
+    A2* a = new A3();
     delete a;
 
     return 0;

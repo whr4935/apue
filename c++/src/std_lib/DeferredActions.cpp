@@ -8,8 +8,22 @@ struct A
         std::cout << __PRETTY_FUNCTION__ << " " << a << std::endl;
     }
 
+    virtual void print() {
+        std::cout << "print:aaa" << std::endl;
+    }
+};
+
+struct B : A
+{
     void print() {
-        std::cout << "aaa" << std::endl;
+        std::cout <<"print:bbb" << std::endl;
+    }
+};
+
+struct C : B
+{
+    void print() {
+        std::cout <<"print:ccc" << std::endl;
     }
 };
 
@@ -53,5 +67,9 @@ void testDeferredActions()
     Call(testFunc, a1);
 
     Call2(a1);
+
+    C b;
+    auto testVirtuaalFuncBind = std::bind(&A::print, b);
+    testVirtuaalFuncBind();
 
 }

@@ -2,10 +2,10 @@
 
 class Base
 {
-    virtual void func(int) = 0;
+    virtual void func(int) {}
 
 protected:
-    int base1 = 81;
+    //int base1 = 81;
 };
 
 class A : virtual public Base
@@ -17,8 +17,8 @@ public:
     }
 
 private:
-    int a1 = 100;
-    int a2 = 101;
+    //int a1 = 100;
+    //int a2 = 101;
 };
 
 
@@ -32,7 +32,7 @@ public:
     virtual void func(int) {
 
     }
-    int b1 = 200;
+    //int b1 = 200;
 };
 
 class C : public A, public B
@@ -45,19 +45,35 @@ public:
 
     void fff() {
         std::cout << __PRETTY_FUNCTION__ << std::endl;
-        base1;
+        //base1;
     }
 
     //virtual void func(double d) {
         //std::cout << "func " << d << std::endl;
     //}
 
-    int c1 = 300;
+    //int c1 = 300;
 };
 
 int main(int argc, char *argv[])
 {
     C c;
+
+    std::cout << "sizeof int = " <<sizeof(int) <<std::endl;
+    std::cout << "sizeof Base = " << sizeof(Base) << std::endl;
+    std::cout << "sizeof A = " << sizeof(A) << std::endl;
+    std::cout << "sizeof B = " << sizeof(B) << std::endl;
+    std::cout << "sizeof C = " << sizeof(C) << std::endl;
+
+    A* pa = (A*)&c;
+    B* pb = (B*)&c;
+
+    std::cout << pa << std::endl;
+    std::cout << pb << std::endl;
+
+    pb = (B*)(C*)pa;
+    std::cout << "pb = " << pb << std::endl;
+
     A& a = c;
     a.func(1);
     a.fff();
@@ -94,8 +110,8 @@ int main(int argc, char *argv[])
     //void (* pf)(int) = (void (*)(int))vp;
     //pf(1);
 
-    int C::* cp = &C::c1;
-    c.*cp = 120;
+    //int C::* cp = &C::c1;
+    //c.*cp = 120;
     //std::cout << c.c1 << std::endl;
 
     void (C::*pp1)(int) = &C::func;

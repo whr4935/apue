@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstring>
 #include <algorithm>
+#include "static_class.h"
 
 class MyString {
 public:

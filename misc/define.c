@@ -6,5 +6,11 @@ int main(int argc, char *argv[])
     printf("define!!! %d \n", A);
 #endif
 
+#ifdef B
+    printf("define B:%s\n", B);
+#else
+    printf("B undefined!\n");
+#endif
+
     return 0;
 }

@@ -152,3 +152,20 @@ static int test_namespace()
 
     return 0;
 }
+
+struct Test {
+    Test(int d) {
+
+    }
+};
+
+static void test_func(Test& a)
+{
+
+}
+
+static int test_const_arg()
+{
+    Test d = 3;
+    test_func(d);
+}
