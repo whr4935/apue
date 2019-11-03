@@ -7,6 +7,7 @@ static int test_sale_item(int argc, char **argv);
 static int test_dtor_sequence();
 static int test_namespace();
 extern int test_signleton();
+extern int test_thread_local();
 
 //////////////////////////////////////////////////////////////////////////
 int TEST_misc(int argc, char **argv)
@@ -21,7 +22,8 @@ int TEST_misc(int argc, char **argv)
     // ret = test_sale_item(argc, argv);
     //ret = test_dtor_sequence();
     //ret = test_namespace();
-    test_signleton();
+    //test_signleton();
+    test_thread_local();
 
     std::cout << "======================\n"<< std::endl;
     return ret;
