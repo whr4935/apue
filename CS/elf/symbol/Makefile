@@ -19,14 +19,14 @@ include $(BUILD_DIR)/Footer.mk
 ########################
 custom:$(OUT_DIR)/simpleSection $(OUT_DIR)/ManualNameMangling $(OUT_DIR)/pt $(OUT_DIR)/pt_multithread
 
-$(OUT_DIR)/simpleSection:$(OBJ_DIR)/simpleSection.o
-	$(build_exectuable)
+$(OUT_DIR)/simpleSection:$(OBJ_DIR)/simpleSection.o $(OBJ_DIR)/test_simpleSection.o
+	$(build-executable)
 
 $(OUT_DIR)/ManualNameMangling:$(OBJ_DIR)/ManualNameMangling.o
-	$(build_exectuable)
+	$(build-executable)
 
 $(OUT_DIR)/pt:$(OBJ_DIR)/thread.o
-	$(build_exectuable)
+	$(build-executable)
 
 $(OUT_DIR)/pt_multithread:$(OBJ_DIR)/thread.o
 	$(CXX) $(LDFLAGS) $(EXECUTABLE_LDFLAGS) -o$@ $^ -pthread $(LIBS) $(EXECUTABLE_LIBS)
