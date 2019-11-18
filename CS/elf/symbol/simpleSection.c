@@ -4,7 +4,12 @@ int global_uninit_val;
 
 /*static*/ __attribute__((visibility("hidden"))) void whr_func1(int i)
 {
-    printf("%d\n", i);
+    printf("%s, %d\n", __FUNCTION__, i);
+}
+
+__attribute__((visibility("default"))) void whr_func2(int i)
+{
+    printf("%s, %d\n", __FUNCTION__, i);
 }
 
 #if 0
