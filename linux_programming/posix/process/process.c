@@ -15,6 +15,7 @@
 #include <syslog.h>
 #include <string.h>
 #include <aio.h>
+#include <utils/utils_main/utils_main.h>
 
 
 int TEST_process(int argc, char **argv)
@@ -24,10 +25,10 @@ int TEST_process(int argc, char **argv)
 	//test_rlimit();
 	//test_fork();
 	//test_vfork();
-	test_control_priority();
+	/*test_control_priority();*/
 	//test_abort_core();
 	//test_segement_fault();
-	//test_signal();
+    test_signal();
 	//test_signal_noreentrant();
 	//test_sleep1();
 	//test_alarm();
@@ -42,6 +43,8 @@ int TEST_process(int argc, char **argv)
 
 	return 0;
 }
+AUTO_RUN2(TEST_process);
+
 
 static int test_env_routine()
 {
@@ -608,8 +611,50 @@ static void sig_usr(int signo)
 	}
 }
 
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+int g_exit = 0;
+
+void thread_safe_func(int sig)
+{
+    if (sig > 0) {
+        printf("signum:%d\n", sig);
+        g_exit = 1;
+        return;
+    }
+    pthread_mutex_lock(&mutex);
+    printf("hello, I am safe!\n");
+    while (!g_exit) {
+        sleep(1);
+    }
+    pthread_mutex_unlock(&mutex);
+
+    if (sig > 0) {
+        printf("exit from signal handler!\n");
+    } else {
+        printf("normal exit!\n");
+    }
+}
+
+void sig_int_handler_safe(int signum)
+{
+    printf("sig_int_handler_safe!\n");
+
+    thread_safe_func(signum);
+}
+
 int test_signal()
 {
+    struct sigaction act;
+    act.sa_handler = sig_int_handler_safe;
+    act.sa_flags = 0;
+    sigemptyset(&act.sa_mask);
+    sigaction(SIGINT, &act, NULL);
+    thread_safe_func(-1);
+
+    return 0;
+
+
+
 	int ret;
 
 	if (signal(SIGUSR1, sig_usr) == SIG_ERR) {
