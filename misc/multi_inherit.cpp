@@ -59,17 +59,18 @@ int main(int argc, char *argv[])
 {
     C c;
 
+    A* pa = (A*)&c;
+    B* pb = (B*)&c;
+
+    std::cout << pa << std::endl;
+    std::cout << pb << std::endl;
+
     std::cout << "sizeof int = " <<sizeof(int) <<std::endl;
     std::cout << "sizeof Base = " << sizeof(Base) << std::endl;
     std::cout << "sizeof A = " << sizeof(A) << std::endl;
     std::cout << "sizeof B = " << sizeof(B) << std::endl;
     std::cout << "sizeof C = " << sizeof(C) << std::endl;
 
-    A* pa = (A*)&c;
-    B* pb = (B*)&c;
-
-    std::cout << pa << std::endl;
-    std::cout << pb << std::endl;
 
     pb = (B*)(C*)pa;
     std::cout << "pb = " << pb << std::endl;

@@ -1,7 +1,7 @@
 MAKE := make --no-print-directory
 CC := gcc
 CXX := g++
-CFLAGS:= -I. -g -std=c99 -Wall -pthread
+CFLAGS:= -I. -g -std=gnu99 -Wall -pthread
 CXXFLAGS := -I. -g -std=c++11 -Wall -pthread
 
 LIBS := 

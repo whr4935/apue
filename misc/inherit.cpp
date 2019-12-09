@@ -6,6 +6,9 @@ struct Base {
     }
 protected:
     int mData = 10;
+
+//private:
+    //Base();
 };
 
 struct Derive : Base {
@@ -16,6 +19,10 @@ struct Derive : Base {
 
     void dereive_func() {
         std::cout << __FUNCTION__ << std::endl;
+    }
+
+    Derive() {
+
     }
 
 protected:

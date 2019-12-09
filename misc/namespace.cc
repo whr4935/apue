@@ -1,4 +1,10 @@
+//直接using是不行的，必须看到声明
+//using std::cout;
+
 #include <iostream>
+#include <vector>
+
+typedef std::vector<int> aacout;
 
 //using namespace std;
 namespace A
