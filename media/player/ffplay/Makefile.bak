@@ -1,0 +1,31 @@
+BUILD_DIR:=build
+TARGET:=ffplay
+CFLAGS := -g -fPIC -I.
+LIBS := -lSDL
+SRC_DIR:=libavcodec libavformat libavutil
+
+SRC := $(foreach dir, $(SRC_DIR), $(wildcard $(dir)/*.c))
+SRC += $(wildcard *.c)
+OBJ :=$(SRC:.c=.o)
+OBJ :=$(addprefix $(BUILD_DIR)/, $(notdir $(OBJ)))
+
+vpath %.c $(SRC_DIR)
+
+target all:$(BUILD_DIR) $(BUILD_DIR)/$(TARGET)
+
+$(BUILD_DIR)/$(TARGET):$(OBJ)
+	gcc -o $@ $^ $(LIBS)
+
+-include $(OBJ:.o=.dep)
+
+$(BUILD_DIR)/%.o:%.c
+	gcc $(CFLAGS) -c -o $@ $<  -MMD -MF $(@:.o=.dep)
+
+$(BUILD_DIR):
+	mkdir -p $@
+
+clean:
+	-rm -rf $(BUILD_DIR)
+
+.PHONY:all clean
+

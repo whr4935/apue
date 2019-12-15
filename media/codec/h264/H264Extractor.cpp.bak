@@ -1,0 +1,348 @@
+/*
+ * Copyright (C) 2016 The Android Open Source Project
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//#define LOG_NDEBUG 0
+#define LOG_TAG "H264Extractor"
+
+
+#include "H264Extractor.h"
+#include "include/avc_utils.h"
+#include <utils/Log.h>
+#include <media/stagefright/foundation/ADebug.h>
+#include <media/stagefright/foundation/ABuffer.h>
+#include <media/stagefright/foundation/AMessage.h>
+#include <media/stagefright/DataSource.h>
+#include <media/stagefright/MediaBuffer.h>
+#include <media/stagefright/MediaBufferGroup.h>
+#include <media/stagefright/MediaDefs.h>
+#include <media/stagefright/MediaErrors.h>
+#include <media/stagefright/MediaSource.h>
+#include <media/stagefright/MetaData.h>
+#include <media/stagefright/Utils.h>
+#include <utils/String8.h>
+
+namespace android {
+
+class H264Source : public MediaSource {
+public:
+    H264Source(const sp<H264Extractor> &extractor, size_t trackIndex = 0);
+    virtual status_t start(MetaData *params = NULL);
+    virtual status_t stop();
+    virtual sp<MetaData> getFormat();
+    virtual status_t read(MediaBuffer **buffer, const ReadOptions *options);
+
+    // The consumer of this media source requests that the given buffers
+    // are to be returned exclusively in response to read calls.
+    // This will be called after a successful start() and before the
+    // first read() call.
+    // Callee assumes ownership of the buffers if no error is returned.
+    virtual status_t setBuffers(const Vector<MediaBuffer *> &buffers);
+
+    //Get one empty buffer from source to fill special data in secure mode.
+    virtual status_t getBuffer(MediaBuffer** buffer);
+
+    static const size_t kInitialBufferSize;
+
+protected:
+    virtual H264Source();
+
+private:
+    friend H264Extractor;
+
+    static size_t findNALStart(uint8_t *buffer, size_t size);
+    static size_t H264Source::getNALUnit(sp<DataSource> source, size_t offset, sp<ABuffer> *pout, sp<ABuffer> cookie);
+
+    const sp<H264Extractor> mExtractor;
+    sp<DataSource> mSource;
+    sp<MetaData> mMeta;
+    size_t mCurrentPos;
+    size_t mPos;
+    sp<ABuffer> mBuffer;
+    MediaBufferGroup *mGroup;
+    size_t mTrackIndex;
+    int64_t mTimeUs;
+    int mEOS;
+    DISALLOW_EVIL_CONSTRUCTORS(H264Source);
+};
+
+const size_t H264Source::kInitialBufferSize = 1<<16;
+
+
+
+H264Source::H264Source(const sp<H264Extractor> &extractor, size_t trackIndex) :
+    mExtractor(extractor),
+    mMeta(new MetaData),
+    mBuffer(new ABuffer(kInitialBufferSize))
+{
+
+}
+
+
+status_t H264Source::start(MetaData *params /*= NULL*/)
+{
+    return OK;
+}
+
+status_t H264Source:: stop()
+{
+    return OK;
+}
+sp<MetaData> H264Source::getFormat()
+{
+    return mMeta;
+}
+
+status_t H264Source::read(MediaBuffer **buffer, const ReadOptions *options)
+{
+    int start_pos = -1;
+    int end_pos = -1;
+
+    for (;;) {
+        int available_size = mBuffer->capacity() - mBuffer->offset() - mBuffer->size();
+        int read_size;
+        if (!mEOS && available_size > 0) {
+            if ((read_size = mSource->readAt(mCurrentPos, mBuffer->data(), available_size)) < 0)
+                return ERROR_END_OF_STREAM;
+            else if (read_size == 0) {
+                mEOS = true;
+            } else {
+                mCurrentPos += read_size;
+                mBuffer->setRange(mBuffer->offset(), mBuffer->size() + read_size);
+            }
+        }
+
+        if (mEOS && mBuffer->size() == 0)
+            return ERROR_END_OF_STREAM;
+
+        int pos;
+        if (pos = findNALStart(mBuffer->data(), mBuffer->size()) < 0) {
+            if (start_pos < 0) {
+                mBuffer->setRange(0, 0);
+            } else {
+                if (mBuffer->offset() < kInitialBufferSize) {
+                    int new_size = mBuffer->size() << 1;
+                    sp<ABuffer> newBuffer = new ABuffer(new_size);
+                    memcpy(newBuffer->data(), mBuffer->data(), mBuffer->size());
+                    newBuffer->setRange(0, mBuffer->size());
+                    mBuffer = newBuffer;
+                } else {
+                    memmove(mBuffer->base(), mBuffer->data(), mBuffer->size());
+                    mBuffer->setRange(0, mBuffer->size());
+                }
+            }
+        } else {
+            if (start_pos < 0) {
+                start_pos  = pos + 4;
+                mBuffer->setRange(mBuffer->offset() + start_pos, mBuffer->size() - start_pos);
+            } else {
+                end_pos = pos + mBuffer->offset();
+                break;
+            }
+        }
+    }
+
+    sp<MetaData> meta = MakeAVCCodecSpecificData(mBuffer);
+    int data_len = end_pos - mBuffer->offset();
+    MediaBuffer* media_buffer = new MediaBuffer(mBuffer->size() + 4);
+    memcpy(media_buffer->data(), "\x00\x00\x00\x01", 4);
+    memcpy(media_buffer->data() + 4, mBuffer->data(), data_len);
+    mBuffer->setRange(mBuffer->offset() + data_len, mBuffer->size() - data_len);
+    media_buffer->meta_data()->setInt64(kKeyTime, mTimeUs);
+    mTimeUs += 33000;
+    char *data = media_buffer->data();
+    int isKey = (data[4] & 0x1F) == 5;
+    if (isKey) {
+        media_buffer->meta_data()->setInt32(kKeyIsSyncFrame, 1);
+    }
+
+    *buffer = media_buffer;
+
+    return OK;
+}
+
+
+status_t H264Source::setBuffers(const Vector<MediaBuffer *> &buffers) {
+    if (mGroup != NULL) {
+        delete mGroup;
+    }
+
+    mGroup = new MediaBufferGroup;
+
+    for (uint32_t i = 0; i < buffers.size(); ++i) {
+        mGroup->add_buffer(buffers[i]);
+    }
+
+    return OK;
+}
+
+status_t H264Source::getBuffer(MediaBuffer** buffer) {
+    status_t err = mGroup->acquire_buffer(buffer);
+
+    if (err != OK) {
+        CHECK(*buffer == NULL);
+        return err;
+    }
+
+    return OK;
+}
+
+size_t H264Source::findNALStart(uint8_t *buffer, size_t size)
+{
+    for (int i = 0; i + 3 < size; ++i) {
+        if (!memcmp(buffer + i , "\x00\x00\x00\x01", 4)) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+size_t H264Source::getNALUnit(sp<DataSource> source,  size_t offset, sp<ABuffer> *pout, sp<ABuffer> cookie)
+{
+    int start_pos = -1;
+    int end_pos = -1;
+    bool eof = false;
+    size_t current_offset = offset;
+    size_t search_offset = 0;
+    sp<ABuffer> buffer;
+
+    if (cookie != NULL)
+        buffer = cookie;
+    else
+        buffer = new ABuffer(kInitialBufferSize);
+
+    for (;;) {
+        int available_size = buffer->capacity() - buffer->offset() - buffer->size();
+        int read_size;
+        if (!eof && available_size > 0) {
+            if ((read_size = source->readAt(current_offset, buffer->data(), available_size)) < 0)
+                return -1;
+            else if (read_size == 0) {
+                eof = true;
+            } else {
+                current_offset += read_size;
+                buffer->setRange(buffer->offset(), buffer->size() + read_size);
+            }
+        }
+
+        if (eof && buffer->size() < 4)
+            return ERROR_END_OF_STREAM;
+
+        int pos;
+        if ((pos = findNALStart(buffer->data() + search_offset, buffer->size())) < 0) {
+            if (eof) {
+                if (start_pos >= 0) {
+                    end_pos = buffer->size() - search_offset;
+                }
+                break;
+            } else if (start_pos < 0) {
+                memmove(buffer->base(), buffer->data() + buffer->size()-3, 3);
+                buffer->setRange(0, 3);
+            } else {
+                 if (buffer->offset() < kInitialBufferSize) {
+                    int new_size = buffer->size() << 1;
+                    sp<ABuffer> newBuffer = new ABuffer(new_size);
+                    memcpy(newBuffer->data(), buffer->data(), buffer->size());
+                    newBuffer->setRange(0, buffer->size());
+                    buffer = newBuffer;
+                } else {
+                    memmove(buffer->base(), buffer->data(), buffer->size());
+                    buffer->setRange(0, buffer->size());
+                }
+            }
+        } else {
+            if (start_pos < 0) {
+                start_pos  = pos + search_offset + 4;
+                search_offset = 4;
+                //buffer->setRange(buffer->offset() + start_pos, buffer->size() - start_pos);
+            } else {
+                end_pos = pos + search_offset;
+                break;
+            }
+        }
+    }
+
+    if (start_pos >= 0) {
+        int NALUnitLen = end_pos - start_pos;
+        *pout = new ABuffer(NALUnitLen);
+        memcpy((*pout)->data(), buffer->data() + start_pos, end_pos);
+    } else {
+        *pout = NULL;
+    }
+
+    return current_offset - offset;
+}
+
+////////////////////////////////////////////////////////
+H264Extractor::H264Extractor(const sp<DataSource> &source) :
+    mDataSource(source),
+    mInitCheck(NO_INIT)
+{
+
+}
+
+size_t H264Extractor::countTracks()
+{
+    return 1;
+}
+
+sp<MediaSource> H264Extractor::getTrack(size_t index)
+{
+    if (mInitCheck != OK)
+        return NULL;
+
+    return new H264Source(this, index);
+}
+
+sp<MetaData> H264Extractor::getTrackMetaData(size_t index, uint32_t flags)
+{
+    if (mInitCheck != OK)
+        return NULL;
+
+     return mMeta;
+}
+
+sp<MetaData> H264Extractor::getMetaData()
+{
+    if (mInitCheck != OK)
+        return NULL;
+
+    return mMeta;
+}
+
+uint32_t H264Extractor::flags() const
+{
+    return 0;
+}
+
+status_t H264Extractor::getPacket(ABuffer &buffer)
+{
+    sp<ABuffer> buf = new ABuffer(H264Source::kInitialBufferSize);
+
+
+    return OK;
+}
+
+bool SniffH264(const sp<DataSource> &source, String8 *mimeType, float *confidence, sp<AMessage> *meta)
+{
+
+    *mimeType = MEDIA_MIMETYPE_VIDEO_AVC;
+    return true;
+}
+
+
+}
+
