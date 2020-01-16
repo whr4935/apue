@@ -16,8 +16,24 @@ namespace A
     }
 }
 
+
+class Base
+{
+
+};
+
 int main(int argc, char *argv[])
 {
+    Base b;
+
+    const Base& rb = b;
+    const Base& b2 = rb;
+
+    cout << "a" <<std::endl;
+
+    printf("b2:%p, rb:%p", &b2, &rb);
+
+
     A::cout << "abc" << A::endl;
 
     A::f(); 
