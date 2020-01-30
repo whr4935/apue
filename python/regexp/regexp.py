@@ -1,3 +1,4 @@
+#!/bin/env python
 import re
 
 pattern1 = r"\bdo\B"
