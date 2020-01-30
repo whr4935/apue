@@ -1,11 +1,13 @@
-TARGET = myAsmAdd
+MY_TARGET = myAsmAdd
 OBJS := asm.o main.o
 
 CC=gcc -m32
 AS=as --32
 LD=ld -m elf_i386 --dynamic-linker /lib/ld-linux.so.2  -lc
 
-$(TARGET):$(OBJS)
+build_target:$(MY_TARGET)
+
+$(MY_TARGET):$(OBJS)
 	$(LD) -o $@ $^ 
 
 %.o:%.c
@@ -15,4 +17,4 @@ $(TARGET):$(OBJS)
 	$(AS) -o $@ $<
 
 clean:
-	-rm -rf $(TARGET) *.o *.dep
+	-rm -rf $(MY_TARGET) *.o *.dep
