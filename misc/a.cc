@@ -18,6 +18,12 @@ void signalHandle(int sig)
 
 int main(int argc, char *argv[])
 {
+    int b = 10;
+
+    b -= 4-1;
+
+    printf("b = %d\n %p\n", b, &b);
+
     int i;
 
     printf("isblank:%d\n", isblank(' '));
@@ -27,7 +33,7 @@ int main(int argc, char *argv[])
     printf("tcgetpgrp:%d\n", tcgetpgrp(0));
 
     int a = -3;
-    int b = -a;
+    b = -a;
     printf("b = %d\n", b);
 
 

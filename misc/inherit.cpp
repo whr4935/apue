@@ -4,6 +4,9 @@ struct Base {
     void base_func() {
         std::cout << __FUNCTION__ << std::endl;
     }
+    virtual void foo(int a = 3) {
+        std::cout << "Base foo" << std::endl;
+    }
 protected:
     int mData = 10;
 
@@ -21,6 +24,14 @@ struct Derive : Base {
         std::cout << __FUNCTION__ << std::endl;
     }
 
+    virtual void foo(int a) {
+        std::cout << "Derive foo" << std::endl;
+    }
+
+    virtual void foo(double a) {
+        std::cout << "Derive double foo" << std::endl;
+    }
+
     Derive() {
 
     }
@@ -34,9 +45,12 @@ int main(int argc, char *argv[])
 {
 
     Derive d;
-
+    d.foo(1.0);
     d.print();
     d.base_func();
+
+    Base& b = d;
+    b.foo();
     
     return 0;
 }
