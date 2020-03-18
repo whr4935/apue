@@ -6,6 +6,8 @@
 
 typedef std::vector<int> aacout;
 
+//using naemspace abc;
+
 //using namespace std;
 namespace A
 {

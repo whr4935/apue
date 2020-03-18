@@ -37,7 +37,7 @@ std::ostream& operator<<(std::ostream&o, dummy& d)
 void test1()
 {
 
-    list<dummy> l;
+    alg::list<dummy> l;
     dummy d(3);
 
     auto it = l.begin();

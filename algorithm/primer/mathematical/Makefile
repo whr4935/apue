@@ -1,6 +1,6 @@
 include $(BUILD_DIR)/Header.mk
 
-MODULE  := 
+MODULE  := mathematical
 SRC_DIR :=
 DEFINE  :=
 INCLUDE := -I../

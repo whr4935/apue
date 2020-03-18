@@ -1,7 +1,11 @@
 #ifndef LIST_H
 #define LIST_H
 
+#include <iostream>
+#include <utils/utils.h>
 #include <cstddef>
+
+namespace  alg {
 
 template<typename T>
 class list
@@ -192,6 +196,7 @@ size_t list<T>::size()
 } 
 
 
+}
 
 
 #endif // LIST_H

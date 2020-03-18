@@ -5,6 +5,7 @@
 #include <cassert>
 #include "fifo.h"
 
+namespace alg {
 static size_t round_up_power_of_two(size_t size)
 {
     --size;
@@ -75,4 +76,7 @@ size_t fifo::size() const
 bool fifo::empty() const
 {
     return in == out;
+}
+
+
 }

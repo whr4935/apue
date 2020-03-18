@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-
+namespace alg {
 struct fifo
 {
 public:
@@ -23,6 +23,6 @@ private:
     size_t out = 0;
 };
 
-
+}
 
 #endif
