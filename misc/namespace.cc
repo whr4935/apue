@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
     const Base& rb = b;
     const Base& b2 = rb;
 
-    std::cout << "a" <<std::endl;
+    A::cout << "a" <<std::endl;
 
     printf("b2:%p, rb:%p", &b2, &rb);
 
