@@ -1,0 +1,3 @@
+[submodule "android_apk/vlc-bench2"]
+	path = android_apk/vlc-bench2
+	url = https://github.com/whr4935/vlc-bench.git
