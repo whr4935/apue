@@ -5,13 +5,18 @@
 #include <time.h>
 #include <sys/time.h>
 
+static bool inline isDelimiter(const std::string& delimiter, char c)
+{
+    return delimiter.find(c) != std::string::npos;
+}
+
 
 std::vector<std::string>& split(const std::string& str, std::vector<std::string>& result)
 {
     std::string::size_type pos, prev = 0;
     std::string s;
     std::string cmdDelimiter = " ";
-    std::string argDelimiter = ",";
+    std::string argDelimiter = ", ";
 
     pos = str.find_first_of(cmdDelimiter);
 
@@ -28,13 +33,13 @@ std::vector<std::string>& split(const std::string& str, std::vector<std::string>
             size_t b = prev;
             size_t e = pos;
             while (b < e) {
-                if (isspace(str[b]))        ++b;
-                else if (isspace(str[e]))   --e;
+                if (isspace(str[b]) || isDelimiter(argDelimiter, str[b]))        ++b;
+                else if (isspace(str[e]) || isDelimiter(argDelimiter, str[e]))   --e;
                 else                        break;
             }
 
-            if (b < e) {
-                result.emplace_back(str, b, e - b);
+            if (b <= e) {
+                result.emplace_back(str, b, e - b + 1);
             }
         }
 
@@ -42,7 +47,7 @@ std::vector<std::string>& split(const std::string& str, std::vector<std::string>
     }
 
     while (prev < str.size()) {
-        if (isspace(str[prev]))
+        if (isspace(str[prev]) || isDelimiter(argDelimiter, str[prev]))
             ++prev;
         else
             break;
@@ -78,7 +83,7 @@ void fmtTime()
 
 int main(int argc, char *argv[])
 {
-    const char* buf = "videoShow 1, 2, 3,\n";    
+    const char* buf = "videoShow 1 2 3\n";    
     //const char buf[] = "videoShow";    
 
     std::string s(buf, 10);

@@ -21,7 +21,7 @@ custom:$(OUT_DIR)/dlopenTest
 
 $(OUT_DIR)/dlopenTest:$(OBJ_DIR)/dlopenTest.o $(LIBS_DIR)/libdlopentest1.so $(LIBS_DIR)/libdlopentest2.so
 	@echo "  BUILD   \033[1m\033[32m `basename $@` \033[0m"""
-	$(CXX) $(LDFLAGS) $(EXECUTABLE_LDFLAGS) -o$@ $(filter %.o, $^) $(LIBS) $(EXECUTABLE_LIBS) -ldlopentest1 -ldlopentest2 -ldl
+	$(CXX) $(LDFLAGS) $(EXECUTABLE_LDFLAGS) -o$@ $(filter %.o, $^) $(LIBS) $(EXECUTABLE_LIBS) -ldlopentest1  -ldl
 
 $(LIBS_DIR)/libdlopentest1.so:$(OBJ_DIR)/dlopentest1.o
 	$(Q)echo "  LINK    \033[1m\033[32m`basename $@`\033[0m"
