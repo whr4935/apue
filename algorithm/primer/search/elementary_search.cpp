@@ -6,6 +6,7 @@
 #include <sort/elementary_sort.h>
 #include <sort/quicksort.h>
 
+namespace alg {
 int seq_search(const int a[], int N, int v)
 {
     int i;
@@ -206,16 +207,16 @@ void insert_bin_tree(int v, int info)
 void in_bin_tree(int *in_index)
 {
     struct node* x= head->r;
-    init_stack();
+    alg::init_stack();
 
     printf("sort bin tree:");
-    while (x!=z || !stack_empty()) {
+    while (x!=z || !alg::stack_empty()) {
         while (x != z) {
             push((long)x);
             x = x->l;
         }
 
-        x = (struct node*)pop();
+        x = (struct node*)alg::pop();
         printf("%3d%s ", x->key, x->red?"[r]":"");
         if (in_index)
             *in_index++ = x->info;
@@ -230,7 +231,7 @@ void in_bin_tree(int *in_index)
 void pre_bin_tree(int *pre_index)
 {
     struct node *x = head->r;
-    init_stack();
+    alg::init_stack();
 
     if (x != z)
         push((long)x);
@@ -285,7 +286,7 @@ void level_bin_tree()
 
     printf("level traverse bin tree:");
     while (!queue_empty()) {
-        get(&x);
+        get((long*)&x);
         printf("%3d ", x->key);
         if (x->l != z) put((long)x->l);
         if (x->r != z) put((long)x->r);
@@ -730,7 +731,7 @@ void test_rbtree_search()
     free(head);
 }
 
-
+}
 
 
 

@@ -18,7 +18,7 @@ union U{
 };
 
 
-
+namespace alg {
 int test_search(int argc, char **argv)
 {
 
@@ -35,4 +35,6 @@ int test_search(int argc, char **argv)
     test_elementary_search();
 
     test_rbtree_search();
+}
+
 }

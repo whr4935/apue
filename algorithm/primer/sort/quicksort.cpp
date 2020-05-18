@@ -6,7 +6,7 @@
 #include "ADT/stack.h"
 #include "elementary_sort.h"
 
-
+namespace alg {
 void quick_sort_core(int a[], int l, int r)
 {
     int v, t;
@@ -322,7 +322,7 @@ void test_select_kth()
     free(test_data);
 }
 
-
+}
 
 
 

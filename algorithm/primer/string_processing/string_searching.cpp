@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <assert.h>
+#include <string.h>
 
+int kmp_search(char* p, char *a);
 
 int brutesearch(char* p, char *a)
 {
@@ -48,7 +50,7 @@ void test_brute_force_search()
     ret = kmp_search(p, a);
 
     printf("ret = %d\n", ret);
-    return 0;
+    return;
 }
 
 ///////////////////////////////////////////////////////////////////

@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 
 int gcd(int u, int v)
@@ -16,7 +17,7 @@ int gcd(int u, int v)
     return v;
 }
 
-int gcd_v2(u, v)
+int gcd_v2(int u, int v)
 {
     int t;
 

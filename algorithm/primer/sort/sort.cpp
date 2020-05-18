@@ -6,6 +6,7 @@
 #include "heapsort.h"
 #include "mergesort.h"
 
+namespace alg {
 
 int test_sort(int argc, char **argv)
 {
@@ -26,3 +27,4 @@ int test_sort(int argc, char **argv)
     return 0;
 }
 
+}

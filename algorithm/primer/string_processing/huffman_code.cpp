@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 #include "huffman_code.h"
 
 #define COUNT 27
@@ -97,7 +99,7 @@ void huffman_code(char *str, int M, char *code, int *bits_count)
     }
 }
 
-static inline bits(int n, int k, int j)
+static int inline bits(int n, int k, int j)
 {
     return n>>k & ~(~0<<j);
 }

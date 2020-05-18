@@ -5,9 +5,23 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#include "queue.h"
-#include "stack.h"
-#include "tree.h"
+#include "../queue.h"
+#include "../stack.h"
+#include <utils/utils_main/utils_main.h>
+
+namespace alg {
+
+struct tree_node {
+    int key;
+    int pos;
+    int depth;
+    struct tree_node *l, *r;
+};
+
+
+void print_tree();
+
+int test_tree();
 
 //////////////////////////////////////////////////////////////////////////
 int64_t factorial(int N)
@@ -191,7 +205,7 @@ void print_tree(struct tree_node *node)
     put((long)node);
 
     while (!queue_empty()) {
-        get(&node);
+        get((long*)&node);
 
         if (node->depth != depth) {
             buf[0][99] = 0; buf[1][99] = 0;
@@ -244,3 +258,10 @@ int test_tree()
 
     return 0;
 }
+
+
+}
+
+
+AUTO_RUN(alg::test_tree)
+

@@ -3,6 +3,8 @@
 
 #define N 100
 
+namespace alg {
+
 static int stack[N];
 static int sp;
 
@@ -233,7 +235,7 @@ int test_stack()
 }
 
 
-
+}
 
 
 

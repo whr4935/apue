@@ -2,6 +2,8 @@
 #include <utils/utils.h>
 
 #define QUEUE_SIZE 16
+
+namespace alg {
 static int s_queue[QUEUE_SIZE];
 
 static int tail, head;
@@ -29,7 +31,7 @@ int queue_size()
     return tail - head;
 }
 
-bool get(int *v)
+bool get(long *v)
 {
     if (queue_empty()) {
         return false;
@@ -42,7 +44,7 @@ bool get(int *v)
     return true;
 }
 
-bool put(int v)
+bool put(long v)
 {
     if (tail - head >= QUEUE_SIZE)
         return false;
@@ -86,7 +88,7 @@ int test_queue()
 
     print_queue();
 
-    int dummy;
+    long dummy;
 
     for (;;) {
         if (get(&dummy)) {
@@ -112,4 +114,7 @@ int test_queue()
 
 
     return 0;
+}
+
+
 }

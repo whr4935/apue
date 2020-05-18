@@ -286,14 +286,14 @@ void bfs_visit_list(int i, int* val)
 {
     struct node* k;
 
-    put(i);
-    while (get(&i)) {
+    alg::put(i);
+    while (alg::get((long*)&i)) {
         val[i] = 1;
         printf("%2c ", index2V(i));
 
         for (k = adj[i]; k != z; k = k->next) {
             if (val[k->v] == 0) {
-                put(k->v);
+                alg::put(k->v);
                 val[k->v] = -1;
             }
         }
@@ -305,7 +305,7 @@ void bfs_adjacency_list()
     int i;
     int val[MAX_V] = {0};
 
-    init_queue();
+    alg::init_queue();
     for (i = 0; i < V; ++i) {
         if (val[i] == 0)
             bfs_visit_list(i, val);

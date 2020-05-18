@@ -1,5 +1,6 @@
 #include <iostream>
 #include <stack>
+#include <utils/utils_main/utils_main.h>
 
 struct BinaryTree {
     int value;
@@ -83,7 +84,7 @@ void postTraverse(struct BinaryTree* root)
     std::cout << std::endl;
 }
 
-int main(int argc, char *argv[])
+int test_traverseTree()
 {
     struct BinaryTree* root = new BinaryTree(1);
     struct BinaryTree* node2 = new BinaryTree(2);
@@ -102,3 +103,6 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+
+AUTO_RUN(test_traverseTree)
