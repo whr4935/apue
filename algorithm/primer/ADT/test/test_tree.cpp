@@ -7,6 +7,7 @@
 
 #include "../queue.h"
 #include "../stack.h"
+#include "../tree.h"
 #include <utils/utils_main/utils_main.h>
 
 namespace alg {
@@ -190,7 +191,7 @@ void post_traverse(struct tree_node *node)
 }
 
 
-void print_tree(struct tree_node *node)
+static void print_tree(struct tree_node *node)
 {
     int mid_pos = 50;
     int step = 1;
@@ -260,8 +261,28 @@ int test_tree()
 }
 
 
+int test_tree_v2()
+{
+    Tree* node1 = new Tree('A');
+    Tree* node2 = new Tree('B');
+    Tree* node3 = new Tree('C');
+    Tree* node4 = new Tree('D');
+    Tree* node5 = new Tree('E');
+
+    node1->l = node2;
+    node1->r = node3;
+    node2->r = node4;
+    node3->l = node5;
+
+
+    print_tree(node1);
+
+    return 0;
+}
+
 }
 
 
-AUTO_RUN(alg::test_tree)
+//AUTO_RUN(alg::test_tree)
+AUTO_RUN(alg::test_tree_v2)
 

@@ -18,7 +18,7 @@ include $(BUILD_DIR)/Footer.mk
 custom_target := $(basename $(addprefix $(OUT_DIR)/, $(notdir $(SRC_OBJ))))
 custom:$(custom_target)
 
-$(OUT_DIR)/%:$(OBJ_DIR)/%.o
+$(OUT_DIR)/%:$(OBJ_DIR)/%.o $(LIBS_DIR)/libADT.a
 	$(build-executable)
 
 custom-clean:
