@@ -11,13 +11,15 @@ EXECUTABLE_LIBS :=
 
 #$(call build-target, custom)
 $(eval $(cur-subdirs))
+
 DIRS:=$(subdirs)
 DIRS:=$(filter-out utils, $(DIRS))
-
-libs := $(addprefix $(LIBS_DIR)/lib, $(DIRS))
+SUB_MODULE_DIRS := $(filter-out search, $(DIRS))
+libs := $(addprefix $(LIBS_DIR)/lib, $(SUB_MODULE_DIRS))
 libs := $(addsuffix .a, $(libs))
 #$(info $(subdirs))
 #$(info $(libs))
+
 
 .PHONY:build_target
 build_target:$(LIBS_DIR)/$(MODULE)
@@ -28,6 +30,9 @@ $(LIBS_DIR)/$(MODULE):$(subdirs)
 $(eval $(set-subdirs-target))
 
 $(DIRS):utils
+
+search: ADT sort
+
 
 include $(BUILD_DIR)/Footer.mk
 

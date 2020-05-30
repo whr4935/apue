@@ -1,5 +1,5 @@
-
 #include "elementary_search.h"
+#include <utils/utils_main/utils_main.h>
 
 union U{
     struct S {
@@ -18,8 +18,7 @@ union U{
 };
 
 
-namespace alg {
-int test_search(int argc, char **argv)
+int search()
 {
 
 //    printf("sizeof of U:%d\n", sizeof(union U));
@@ -32,9 +31,11 @@ int test_search(int argc, char **argv)
 //    printf("%d %d %#x\n", u.s2.a, u.s2.b, u.s2.c);
 
 
-    test_elementary_search();
+    alg::test_elementary_search();
 
-    test_rbtree_search();
+    alg::test_rbtree_search();
+
+    return 0;
 }
 
-}
+AUTO_RUN(search)
