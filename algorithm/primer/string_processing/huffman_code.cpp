@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <utils/utils_main/utils_main.h>
 #include "huffman_code.h"
 
 #define COUNT 27
@@ -105,7 +106,7 @@ static int inline bits(int n, int k, int j)
 }
 
 //////////////////////////////////////
-void test_huffman_code()
+int test_huffman_code()
 {
     char* str = "a simple string to be encoded";
     char code[COUNT] = {0};
@@ -128,5 +129,8 @@ void test_huffman_code()
         printf("\n");
     }
 
-
+    return 0;
 }
+
+
+AUTO_RUN(test_huffman_code)

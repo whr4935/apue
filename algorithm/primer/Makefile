@@ -14,7 +14,7 @@ $(eval $(cur-subdirs))
 
 DIRS:=$(subdirs)
 DIRS:=$(filter-out utils, $(DIRS))
-SUB_MODULE_DIRS := $(filter-out search, $(DIRS))
+SUB_MODULE_DIRS := $(filter-out search string_processing, $(DIRS))
 libs := $(addprefix $(LIBS_DIR)/lib, $(SUB_MODULE_DIRS))
 libs := $(addsuffix .a, $(libs))
 #$(info $(subdirs))
@@ -31,7 +31,7 @@ $(eval $(set-subdirs-target))
 
 $(DIRS):utils
 
-search: ADT sort
+search string_processing: ADT sort
 
 
 include $(BUILD_DIR)/Footer.mk

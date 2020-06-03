@@ -43,11 +43,11 @@ int brutesearch_v2(char *p, char *a)
 void test_brute_force_search()
 {
     char* a = "abccccaaffffdd";
-    char* p = "bc";
+    char* p = "bd";
 
     int ret = -1;
 
-    ret = kmp_search(p, a);
+    ret = brutesearch(p, a);
 
     printf("ret = %d\n", ret);
     return;
@@ -273,13 +273,13 @@ int test_rk_search()
 ///////////////////////////////////////////////////////////////////
 void test_string_searching()
 {
-//    test_brute_force_search();
+    test_brute_force_search();
 
 //    test_kmp();
 
 //    test_bm_search();
 
-    test_rk_search();
+    //test_rk_search();
 }
 
 
