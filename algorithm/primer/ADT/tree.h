@@ -5,6 +5,7 @@ struct Tree {
     : key(_key)
     , value(_value)
     , red(0)
+    , b(31) //left most bit
     , l(nullptr)
     , r(nullptr)
     {
@@ -14,6 +15,7 @@ struct Tree {
     int key;
     void * value;
     char red;
+    int b;
     Tree* l;
     Tree* r;
 };
