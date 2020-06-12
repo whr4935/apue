@@ -280,9 +280,8 @@ int test_tree_v2()
     return 0;
 }
 
+AUTO_RUN(test_tree)
 }
 
 
-//AUTO_RUN(alg::test_tree)
-AUTO_RUN(alg::test_tree_v2)
 

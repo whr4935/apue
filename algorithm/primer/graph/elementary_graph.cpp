@@ -1,8 +1,9 @@
-#include "elementary_graph.h"
 #include <malloc.h>
 #include <string.h>
-#include <ADT/queue.h>
 #include <ctype.h>
+#include <queue>
+#include <stack>
+#include <utils/utils_main/utils_main.h>
 
 ////////////////////////////////////
 struct node {
@@ -20,14 +21,14 @@ static inline int index(int v)
     return v - 'A';
 }
 
-static inline int index2V(int idx)
+static inline char index2V(int idx)
 {
     return idx + 'A';
 }
 
 
 ////////////////////////////////
-int** create_adjacency_matrix(char* graph, int len) 
+int** create_adjacency_matrix(const char* graph, int len) 
 {
     int i, j, x, y;
     char v1, v2;
@@ -43,12 +44,8 @@ int** create_adjacency_matrix(char* graph, int len)
 
     for (int i = 0; i < V; ++i) {
         for (j = 0; j < V; ++j) {
-            a[i][j] = 0;
+            a[i][j] = i != j ? 0 : 1;
         }
-    }
-
-    for (i = 0; i < V; ++i) {
-        a[i][i] = 1;
     }
 
     for (i = 0; i < E; ++i) {
@@ -85,19 +82,23 @@ void print_adjacency_matrix(int** a)
     printf("\n");
 }
 
-void test_adjacency_matrix()
+int test_adjacency_matrix()
 {
-    char* graph = "5 4 AB AC CD DB";
+    const char* graph = "4 4 AB AC CD DB";
     int** a = create_adjacency_matrix(graph, strlen(graph));
     print_adjacency_matrix(a);
     destroy_adjacency_matrix(a);
+
+    return 0;
 }
+
+AUTO_RUN(test_adjacency_matrix)
 
 
 ////////////////////////////////
-void create_adjacency_list(char *graph, int len)
+void create_adjacency_list(const char *graph, int len)
 {
-    char *p = graph;
+    const char *p = graph;
     int i;
     char v1, v2;
     int x, y;
@@ -164,16 +165,99 @@ void print_adjacency_list()
     }
 }
 
-void test_adjacency_list()
+int test_adjacency_list()
 {
-    char *graph = "4 4 AB CD AC BD";
+    const char *graph = "4 4 AB CD AC BD";
 
     create_adjacency_list(graph, strlen(graph));
 
     print_adjacency_list();
 
     destroy_adjacency_list();
+
+    return 0;
 }
+
+AUTO_RUN(test_adjacency_list)
+
+///////////////////////////////////
+static void dfs_visit_matrix(int**a, int i, int* val)
+{
+    int j;
+
+    printf("%2c ", index2V(i));
+    val[i] = 1;
+
+    for (j = 0; j < V; ++j) {
+        if (val[j]==0 && a[i][j]) {
+            dfs_visit_matrix(a, j, val);
+        }
+    }
+}
+
+static void dfs_ajaency_matrix(int** a)
+{
+    int i, j;
+    int val[MAX_V] = {0};
+
+    printf("DFS matrix:\n");
+    for (i = 0; i < V; ++i) {
+        if (val[i] == 0)
+            dfs_visit_matrix(a, i, val); 
+    }
+
+    printf("\n");
+}
+
+static void dfs_visit_matrix_non_recursive(int** a, int i, int val[], std::stack<int>& s)
+{
+    s.emplace(i);
+    while (!s.empty()) {
+        i = s.top();
+        s.pop();
+
+        printf("%2c ", index2V(i));
+        val[i] = 1;
+
+        for (int j = 0; j < V; ++j) {
+            if (a[i][j] == 1 && val[j] == 0) {
+                s.push(j);
+                val[j] = -1;
+            }
+        }
+    }
+
+}
+
+static void dfs_adjacency_matrix_non_recursive(int** a)
+{
+    int i = 0;
+    int val[MAX_V] = {0};
+
+    printf("DFS matrix non recursive:\n");
+    std::stack<int> s;
+
+    for (i = 0; i < V; ++i) {
+        if (val[i] == 0) {
+            dfs_visit_matrix_non_recursive(a, i, val, s);
+        }
+    }
+
+    printf("\n");
+}
+
+int test_dfs_ajacency_matrix()
+{
+    const char* graph = "7 8 AG AB AC AF ED FD FE GE";
+    int** a = create_adjacency_matrix(graph, strlen(graph));
+    print_adjacency_matrix(a);
+    dfs_ajaency_matrix(a);
+    dfs_adjacency_matrix_non_recursive(a);
+    destroy_adjacency_matrix(a);
+
+    return 0;
+}
+AUTO_RUN(test_dfs_ajacency_matrix)
 
 ///////////////////////////////
 static int v_id = 0;
@@ -216,7 +300,7 @@ void dfs_adjacency_list()
     for (i = 0; i < MAX_V; ++i)
         val[i] = 0;
 
-    printf("DFS:\n\n");
+    printf("DFS adjacency list:\n");
     v_id = 0;
     for (i = 0; i < V; ++i) {
         if (val[i] == 0) {
@@ -230,9 +314,49 @@ void dfs_adjacency_list()
     printf("\n");
 }
 
-void test_dfs_adjacency_list()
+static void visit_adjacency_list_non_recursive(int idx, int val[], std::stack<int>& s)
 {
-    char* graph = "13 13 AG AB AC LM JM JL JK ED FD HI FE AF GE";
+    struct node*t = adj[idx]; 
+    s.push(idx);
+
+    while (!s.empty()) {
+        idx = s.top();
+        s.pop();
+
+        printf("%2c ", index2V(idx));
+        val[idx] = 1;
+
+        for (t = adj[idx]; t != z; t = t->next) {
+            if (val[t->v] == 0) {
+                s.push(t->v);
+                val[t->v] = -1;
+            }
+        }
+    }
+}
+
+static void dfs_adjancency_list_non_recursive()
+{
+    int i;
+    int val[MAX_V];
+    std::stack<int> s;
+
+    for (i = 0; i < MAX_V; ++i)
+        val[i] = 0;
+
+    printf("DFS adjacency list non recursive:\n");
+    for (i = 0; i < V; ++i) {
+        if (val[i] == 0) {
+            visit_adjacency_list_non_recursive(i, val, s);
+        }
+    }
+
+    printf("\n");
+}
+
+int test_dfs_adjacency_list()
+{
+    const char* graph = "7 8 AG AB AC AF ED FD FE GE";
 
     create_adjacency_list(graph, strlen(graph));
 
@@ -240,60 +364,29 @@ void test_dfs_adjacency_list()
 
     dfs_adjacency_list();
 
+    dfs_adjancency_list_non_recursive();
+
     destroy_adjacency_list();
+
+    return 0;
 }
-
-///////////////////////////////////
-void dfs_visit_matrix(int**a, int i, int* val)
-{
-    int j;
-
-    printf("%2c ", index2V(i));
-    val[i] = 1;
-
-    for (j = 0; j < V; ++j) {
-        if (val[j]==0 && a[i][j]) {
-            dfs_visit_matrix(a, j, val);
-        }
-    }
-}
-
-void dfs_ajaency_matrix(int** a)
-{
-    int i, j;
-    int val[MAX_V] = {0};
-
-    printf("DFS matrix:\n");
-    for (i = 0; i < V; ++i) {
-        if (val[i] == 0)
-            dfs_visit_matrix(a, i, val); 
-    }
-
-    printf("\n");
-}
-
-void test_dfs_ajacency_matrix()
-{
-    char* graph = "5 5 BE AB AC BA CD";
-    int** a = create_adjacency_matrix(graph, strlen(graph));
-    print_adjacency_matrix(a);
-    dfs_ajaency_matrix(a);
-    destroy_adjacency_matrix(a);
-}
+AUTO_RUN(test_dfs_adjacency_list);
 
 /////////////////////////////////////
-void bfs_visit_list(int i, int* val)
+void bfs_visit_list(int i, int* val, std::queue<int>& q)
 {
     struct node* k;
 
-    alg::put(i);
-    while (alg::get((long*)&i)) {
+    q.push(i);
+    while (!q.empty()) {
+        i = q.front();
+        q.pop();
         val[i] = 1;
         printf("%2c ", index2V(i));
 
         for (k = adj[i]; k != z; k = k->next) {
             if (val[k->v] == 0) {
-                alg::put(k->v);
+                q.push(k->v);
                 val[k->v] = -1;
             }
         }
@@ -304,11 +397,11 @@ void bfs_adjacency_list()
 {
     int i;
     int val[MAX_V] = {0};
+    std::queue<int> q;
 
-    alg::init_queue();
     for (i = 0; i < V; ++i) {
         if (val[i] == 0)
-            bfs_visit_list(i, val);
+            bfs_visit_list(i, val, q);
     }
 
     printf("\n");
@@ -316,26 +409,12 @@ void bfs_adjacency_list()
 
 void test_bfs_adjacency_list()
 {
-    char* graph = "5 5 BE AB AC BA CD";
+    const char* graph = "5 5 BE AB AC BA CD";
 
     create_adjacency_list(graph, strlen(graph));
     bfs_adjacency_list();
     destroy_adjacency_list();
 }
-
-
-/////////////////////////////////////
-void test_elementary_graph()
-{
-    /* test_adjacency_matrix(); */
-    /* test_adjacency_list(); */
-    test_dfs_adjacency_list();
-    /* test_dfs_ajacency_matrix(); */
-    /* test_bfs_adjacency_list(); */
-}
-
-
-
 
 
 

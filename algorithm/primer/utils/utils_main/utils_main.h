@@ -14,11 +14,11 @@ bool registerRoutine(std::string name, std::function<int()> routine);
 
 #define AUTO_REGISTER_ROUTINE(name, routine) \
     namespace { \
-        struct A{ \
-            A() { \
+        struct routine ## _{ \
+            routine ## _() { \
                 registerRoutine(name, routine); \
             } \
-        } a; \
+        } routine ##_; \
     } 
 
 #endif

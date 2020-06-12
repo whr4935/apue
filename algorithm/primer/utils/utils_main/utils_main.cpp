@@ -1,5 +1,6 @@
 #include <iostream>
 #include <map>
+#include <list>
 #include <execinfo.h>
 #include <memory>
 #include <cxxabi.h>
@@ -8,7 +9,8 @@
 #include "../utime.h"
 
 //////////////////////////////////////////
-using GMap = std::map<std::string, std::function<int()>>;
+//using GMap = std::map<std::string, std::function<int()>>;
+using GMap = std::list<std::pair<std::string, std::function<int()>>>;
 static GMap& getGroutineMap()
 {
     static GMap g;
@@ -18,9 +20,9 @@ static GMap& getGroutineMap()
 
 bool registerRoutine(std::string name, std::function<int()> routine)
 {
-    auto ret = getGroutineMap().emplace(name, routine);
-
-    return ret.second;
+    //auto ret = getGroutineMap().emplace(name, routine);
+    //return ret.second;
+    getGroutineMap().emplace_back(name, routine);
 }
 
 

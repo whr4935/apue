@@ -14,7 +14,7 @@ $(eval $(cur-subdirs))
 
 DIRS:=$(subdirs)
 DIRS:=$(filter-out utils, $(DIRS))
-SUB_MODULE_DIRS := $(filter-out search string_processing, $(DIRS))
+SUB_MODULE_DIRS := $(filter-out search string_processing graph, $(DIRS))
 libs := $(addprefix $(LIBS_DIR)/lib, $(SUB_MODULE_DIRS))
 libs := $(addsuffix .a, $(libs))
 #$(info $(subdirs))

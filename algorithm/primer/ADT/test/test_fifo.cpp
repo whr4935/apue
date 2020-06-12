@@ -113,5 +113,5 @@ int test_fifo()
 
     return 0;
 }
+AUTO_RUN(test_fifo);
 }
-AUTO_RUN(alg::test_fifo);
