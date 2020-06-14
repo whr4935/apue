@@ -373,7 +373,7 @@ int test_dfs_adjacency_list()
 AUTO_RUN(test_dfs_adjacency_list);
 
 /////////////////////////////////////
-void bfs_visit_list(int i, int* val, std::queue<int>& q)
+static void bfs_visit_list(int i, int* val, std::queue<int>& q)
 {
     struct node* k;
 
@@ -393,7 +393,7 @@ void bfs_visit_list(int i, int* val, std::queue<int>& q)
     }
 }
 
-void bfs_adjacency_list()
+static void bfs_adjacency_list()
 {
     int i;
     int val[MAX_V] = {0};
@@ -407,14 +407,17 @@ void bfs_adjacency_list()
     printf("\n");
 }
 
-void test_bfs_adjacency_list()
+static int test_bfs_adjacency_list()
 {
-    const char* graph = "5 5 BE AB AC BA CD";
+    const char* graph = "7 8 AG AB AC AF ED FD FE GE";
 
     create_adjacency_list(graph, strlen(graph));
     bfs_adjacency_list();
     destroy_adjacency_list();
+
+    return 0;
 }
+AUTO_RUN(test_bfs_adjacency_list)
 
 
 
