@@ -1,0 +1,8 @@
+bsymbolic_liveplayer {
+global:
+    init*;
+    test_routine*;
+local:
+    *;
+};
+

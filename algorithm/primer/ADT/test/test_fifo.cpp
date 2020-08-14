@@ -38,7 +38,7 @@ int test_fifo()
     std::thread t([&put_thread_exit](fifo& f, Dummy d) {
         printf("dummy  addr:%p\n", &d);
         printf("  f_addr:%p\n", &f);
-        const char* filepath = "/mnt/f/CloudMusic/Gala - Faraway.mp3";
+        const char* filepath = "/mnt/e/Live1.ts";
         std::fstream infile;
         infile.open(filepath, std::ios_base::in);
         if (!infile.is_open()) {
