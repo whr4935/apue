@@ -79,6 +79,64 @@ int main(int argc, char *argv[])
     }
 
     freeaddrinfo(result);
-
     return 0;
 }
+
+#if 0
+#include <string.h>
+#include <sys/socket.h>
+#include <netdb.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+int main(int argc, char *argv[])
+{
+    
+    int ret = 0;
+
+    struct addrinfo hints, *result;
+    memset(&hints, 0, sizeof(hints));
+
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_flags = AI_PASSIVE;
+
+    ret = getaddrinfo("localhost", "0", &hints, &result);
+    if (ret != 0) {
+        printf("getaddrinfo failed, %s\n", gai_strerror(ret));
+        return -1;
+    }
+
+    struct addrinfo* p = result;
+    for (; p; p = p->ai_next) {
+        struct sockaddr_in* addr = (struct sockaddr_in*)p->ai_addr;
+        printf("addr = %s\n", inet_ntoa(addr->sin_addr));
+        printf("port = %d\n", ntohs(addr->sin_port));
+    }
+
+    int fd = socket(AF_INET, SOCK_DGRAM, 0);
+    if (fd < 0) {
+        printf("create socket failed!\n");
+        return -1;
+    }
+
+    ret = bind(fd, result->ai_addr, result->ai_addrlen);
+    if (ret < 0) {
+        printf("bind failed!\n");
+        return -1;
+    }
+
+    struct sockaddr addr;
+    socklen_t addr_len;
+    ret = getsockname(fd, &addr, &addr_len);
+    if (ret < 0) {
+        printf("getsockname failed!\n");
+        return ret;
+    }
+
+    printf("port = %d\n", ntohs(((struct sockaddr_in*)&addr)->sin_port));
+
+    freeaddrinfo(result);
+    return 0;
+}
+#endif

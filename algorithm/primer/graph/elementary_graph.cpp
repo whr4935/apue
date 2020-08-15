@@ -268,6 +268,7 @@ static int dfs_visit_list(int idx, int *val, int *begin)
     int m, min;
     val[idx] = ++v_id;
     min = v_id;
+    bool start = *begin;
 
     if (*begin) {
         *begin = 0;
@@ -280,7 +281,7 @@ static int dfs_visit_list(int idx, int *val, int *begin)
             m = dfs_visit_list(t->v, val, begin);
             if (m < min)
                 min = m;
-            if (m >= val[idx])
+            if (m >= val[idx] && !start)
                 printf(" ##-%c ", index2V(idx));
         } else if (val[t->v] < min)
             min = val[t->v];
@@ -356,7 +357,7 @@ static void dfs_adjancency_list_non_recursive()
 
 int test_dfs_adjacency_list()
 {
-    const char* graph = "7 8 AG AB AC AF ED FD FE GE";
+    const char* graph = "13 13 AG AB AC LM JM JL JK ED FD HI FE AF GE";
 
     create_adjacency_list(graph, strlen(graph));
 
