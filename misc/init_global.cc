@@ -9,6 +9,17 @@ int test()
     return 0;
 }
 
+enum ABC {
+    AA,
+    BB,
+};
+
+struct init_struct {
+    int a;
+    int b;
+    ABC abc;
+};
+
 /*int g_v1 = 1;*/
 
 int main(int argc, char *argv[])
@@ -25,6 +36,15 @@ int main(int argc, char *argv[])
     } else {
         printf("not equal\n");
     }
+
+    int array_v[10]{1, 2, 3};
+    int array_v2[10];
+
+    init_struct init_s{}, init_s2;
+
+    init_struct init_s3;
+
+    printf("init_s3.b = %d, v2:%d, v1:%d\n", init_s3.b, array_v2[2], array_v[1]);
 
     return 0;
 }
